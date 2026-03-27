@@ -1,0 +1,25 @@
+ # Maven
+backend/target/
+backend/*.jar
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Spring Boot
+backend/src/main/resources/application-local.properties
+*.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
