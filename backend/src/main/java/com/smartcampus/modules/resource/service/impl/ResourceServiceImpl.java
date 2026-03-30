@@ -34,28 +34,29 @@ public class ResourceServiceImpl implements ResourceService {
     public ResourceDTO createResource(ResourceDTO resourceDTO) {
         log.info("Creating new resource: {}", resourceDTO.getName());
 
-        // Validate resource
+        // Validate
         if (!validateResource(resourceDTO)) {
             throw new IllegalArgumentException("Invalid resource data");
         }
 
-        // Check for duplicate name
-        if (resourceRepository.existsByName(resourceDTO.getName())) {
-            throw new IllegalArgumentException("Resource with name '" + resourceDTO.getName() + "' already exists");
-        }
-
-        // Convert DTO to Entity
+        // Convert DTO to Entity - Direct mapping
         Resource resource = Resource.builder()
                 .name(resourceDTO.getName())
                 .resourceType(resourceDTO.getResourceType())
                 .capacity(resourceDTO.getCapacity())
                 .location(resourceDTO.getLocation())
+                .building(resourceDTO.getBuilding())
+                .floor(resourceDTO.getFloor())
                 .status(resourceDTO.getStatus() != null ? resourceDTO.getStatus() : "ACTIVE")
                 .description(resourceDTO.getDescription())
                 .imageUrl(resourceDTO.getImageUrl())
+                .isAirConditioned(resourceDTO.getIsAirConditioned() != null ? resourceDTO.getIsAirConditioned() : false)
+                .hasProjector(resourceDTO.getHasProjector() != null ? resourceDTO.getHasProjector() : false)
+                .hasSmartBoard(resourceDTO.getHasSmartBoard() != null ? resourceDTO.getHasSmartBoard() : false)
+                .hasWifi(resourceDTO.getHasWifi() != null ? resourceDTO.getHasWifi() : false)
+                .hasPowerOutlets(resourceDTO.getHasPowerOutlets() != null ? resourceDTO.getHasPowerOutlets() : false)
                 .build();
 
-        // Save to database
         Resource savedResource = resourceRepository.save(resource);
         log.info("Resource created successfully with ID: {}", savedResource.getId());
 
@@ -69,21 +70,25 @@ public class ResourceServiceImpl implements ResourceService {
         Resource existingResource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
 
-        // Check for duplicate name if name is being changed
-        if (!existingResource.getName().equals(resourceDTO.getName()) &&
-                resourceRepository.existsByName(resourceDTO.getName())) {
-            throw new IllegalArgumentException("Resource with name '" + resourceDTO.getName() + "' already exists");
-        }
-
         // Update fields
         existingResource.setName(resourceDTO.getName());
         existingResource.setResourceType(resourceDTO.getResourceType());
         existingResource.setCapacity(resourceDTO.getCapacity());
         existingResource.setLocation(resourceDTO.getLocation());
+        existingResource.setBuilding(resourceDTO.getBuilding());
+        existingResource.setFloor(resourceDTO.getFloor());
         existingResource.setDescription(resourceDTO.getDescription());
         existingResource.setImageUrl(resourceDTO.getImageUrl());
+        existingResource.setIsAirConditioned(resourceDTO.getIsAirConditioned());
+        existingResource.setHasProjector(resourceDTO.getHasProjector());
+        existingResource.setHasSmartBoard(resourceDTO.getHasSmartBoard());
+        existingResource.setHasWifi(resourceDTO.getHasWifi());
+        existingResource.setHasPowerOutlets(resourceDTO.getHasPowerOutlets());
 
-        // Don't update status through this method - use specific status update method
+        // Only update status if provided
+        if (resourceDTO.getStatus() != null) {
+            existingResource.setStatus(resourceDTO.getStatus());
+        }
 
         Resource updatedResource = resourceRepository.save(existingResource);
         log.info("Resource updated successfully: {}", updatedResource.getId());
@@ -97,9 +102,6 @@ public class ResourceServiceImpl implements ResourceService {
 
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
-
-        // Check if resource has any active bookings (if integrated with booking module)
-        // This would be implemented when integrating with Member 2
 
         resourceRepository.delete(resource);
         log.info("Resource deleted successfully: {}", id);
@@ -134,7 +136,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceDTO> getResourcesByType(String type) {
-        return resourceRepository.findByResourceType(type).stream()
+        return resourceRepository.findAll().stream()
+                .filter(resource -> type.equals(resource.getResourceType()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -153,7 +156,6 @@ public class ResourceServiceImpl implements ResourceService {
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
 
-        // Validate status
         if (!Arrays.asList("ACTIVE", "OUT_OF_SERVICE", "MAINTENANCE").contains(status)) {
             throw new IllegalArgumentException("Invalid status: " + status);
         }
@@ -161,7 +163,6 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setStatus(status);
         Resource updatedResource = resourceRepository.save(resource);
 
-        log.info("Resource status updated successfully");
         return convertToDTO(updatedResource);
     }
 
@@ -173,18 +174,14 @@ public class ResourceServiceImpl implements ResourceService {
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
 
         resource.setStatus("OUT_OF_SERVICE");
-        // Store reason in description or separate field if needed
-        if (resource.getDescription() != null) {
-            resource.setDescription("[OUT OF SERVICE] " + reason + " | " + resource.getDescription());
+        String outOfServiceNote = "[OUT OF SERVICE] " + reason;
+        if (resource.getDescription() != null && !resource.getDescription().isEmpty()) {
+            resource.setDescription(outOfServiceNote + " | " + resource.getDescription());
         } else {
-            resource.setDescription("[OUT OF SERVICE] " + reason);
+            resource.setDescription(outOfServiceNote);
         }
 
         Resource updatedResource = resourceRepository.save(resource);
-
-        // TODO: Create notification for users with pending bookings
-        // TODO: Create maintenance ticket (integration with Member 3)
-
         return convertToDTO(updatedResource);
     }
 
@@ -196,8 +193,11 @@ public class ResourceServiceImpl implements ResourceService {
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
 
         resource.setStatus("ACTIVE");
-        Resource updatedResource = resourceRepository.save(resource);
+        if (resource.getDescription() != null && resource.getDescription().startsWith("[OUT OF SERVICE]")) {
+            resource.setDescription(resource.getDescription().replaceFirst("\\[OUT OF SERVICE\\] [^|]*\\| ?", ""));
+        }
 
+        Resource updatedResource = resourceRepository.save(resource);
         return convertToDTO(updatedResource);
     }
 
@@ -212,19 +212,14 @@ public class ResourceServiceImpl implements ResourceService {
     public AvailabilityWindowDTO addAvailabilityWindow(AvailabilityWindowDTO windowDTO) {
         log.info("Adding availability window for resource: {}", windowDTO.getResourceId());
 
-        // Validate resource exists
         if (!resourceRepository.existsById(windowDTO.getResourceId())) {
             throw new IllegalArgumentException("Resource not found with ID: " + windowDTO.getResourceId());
         }
 
-        // Validate time range
         if (windowDTO.getStartTime().isAfter(windowDTO.getEndTime()) ||
                 windowDTO.getStartTime().equals(windowDTO.getEndTime())) {
             throw new IllegalArgumentException("Start time must be before end time");
         }
-
-        // Check for overlapping windows (optional)
-        // This could be implemented to prevent overlapping availability windows
 
         AvailabilityWindow window = AvailabilityWindow.builder()
                 .resourceId(windowDTO.getResourceId())
@@ -261,33 +256,22 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public boolean validateResource(ResourceDTO resourceDTO) {
         if (resourceDTO.getName() == null || resourceDTO.getName().trim().isEmpty()) {
+            log.warn("Validation failed: Resource name is empty");
             return false;
         }
-
         if (resourceDTO.getCapacity() == null || resourceDTO.getCapacity() < 1 || resourceDTO.getCapacity() > 500) {
+            log.warn("Validation failed: Capacity must be between 1 and 500");
             return false;
         }
-
         if (resourceDTO.getLocation() == null || resourceDTO.getLocation().trim().isEmpty()) {
+            log.warn("Validation failed: Location is empty");
             return false;
         }
-
-        return true;
-    }
-
-    @Override
-    public String generateResourceDescription(ResourceDTO resourceDTO) {
-        StringBuilder description = new StringBuilder();
-        description.append("Resource: ").append(resourceDTO.getName()).append("\n");
-        description.append("Type: ").append(resourceDTO.getResourceType()).append("\n");
-        description.append("Capacity: ").append(resourceDTO.getCapacity()).append(" people\n");
-        description.append("Location: ").append(resourceDTO.getLocation()).append("\n");
-
-        if (resourceDTO.getDescription() != null && !resourceDTO.getDescription().isEmpty()) {
-            description.append("\n").append(resourceDTO.getDescription());
+        if (resourceDTO.getResourceType() == null || resourceDTO.getResourceType().trim().isEmpty()) {
+            log.warn("Validation failed: Resource type is empty");
+            return false;
         }
-
-        return description.toString();
+        return true;
     }
 
     @Override
@@ -297,14 +281,20 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Map<String, Long> getResourceTypeStatistics() {
-        // This would need a custom query to group by resource type
-        // For now, return a placeholder
         Map<String, Long> statistics = new HashMap<>();
-        // Implementation would be added here
+        List<Resource> allResources = resourceRepository.findAll();
+
+        for (Resource resource : allResources) {
+            String type = resource.getResourceType();
+            if (type != null) {
+                statistics.put(type, statistics.getOrDefault(type, 0L) + 1);
+            }
+        }
+
         return statistics;
     }
 
-    // Private Helper Methods
+    // ==================== Private Helper Methods ====================
 
     private Specification<Resource> buildSearchSpecification(ResourceSearchDTO searchDTO) {
         return (root, query, criteriaBuilder) -> {
@@ -329,6 +319,13 @@ public class ResourceServiceImpl implements ResourceService {
                 ));
             }
 
+            if (searchDTO.getBuilding() != null && !searchDTO.getBuilding().isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("building")),
+                        "%" + searchDTO.getBuilding().toLowerCase() + "%"
+                ));
+            }
+
             if (searchDTO.getStatus() != null && !searchDTO.getStatus().isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), searchDTO.getStatus()));
             }
@@ -342,6 +339,23 @@ public class ResourceServiceImpl implements ResourceService {
                 predicates.add(criteriaBuilder.or(namePredicate, descriptionPredicate));
             }
 
+            // Amenities filters
+            if (searchDTO.getAirConditioned() != null && searchDTO.getAirConditioned()) {
+                predicates.add(criteriaBuilder.isTrue(root.get("isAirConditioned")));
+            }
+            if (searchDTO.getHasProjector() != null && searchDTO.getHasProjector()) {
+                predicates.add(criteriaBuilder.isTrue(root.get("hasProjector")));
+            }
+            if (searchDTO.getHasSmartBoard() != null && searchDTO.getHasSmartBoard()) {
+                predicates.add(criteriaBuilder.isTrue(root.get("hasSmartBoard")));
+            }
+            if (searchDTO.getHasWifi() != null && searchDTO.getHasWifi()) {
+                predicates.add(criteriaBuilder.isTrue(root.get("hasWifi")));
+            }
+            if (searchDTO.getHasPowerOutlets() != null && searchDTO.getHasPowerOutlets()) {
+                predicates.add(criteriaBuilder.isTrue(root.get("hasPowerOutlets")));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -353,11 +367,20 @@ public class ResourceServiceImpl implements ResourceService {
                 .resourceType(resource.getResourceType())
                 .capacity(resource.getCapacity())
                 .location(resource.getLocation())
+                .building(resource.getBuilding())
+                .floor(resource.getFloor())
                 .status(resource.getStatus())
                 .description(resource.getDescription())
                 .imageUrl(resource.getImageUrl())
+                .isAirConditioned(resource.getIsAirConditioned())
+                .hasProjector(resource.getHasProjector())
+                .hasSmartBoard(resource.getHasSmartBoard())
+                .hasWifi(resource.getHasWifi())
+                .hasPowerOutlets(resource.getHasPowerOutlets())
                 .createdAt(resource.getCreatedAt() != null ? resource.getCreatedAt().toString() : null)
                 .updatedAt(resource.getUpdatedAt() != null ? resource.getUpdatedAt().toString() : null)
+                .createdBy(resource.getCreatedBy())
+                .updatedBy(resource.getUpdatedBy())
                 .build();
     }
 

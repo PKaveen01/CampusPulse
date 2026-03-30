@@ -3,11 +3,12 @@ package com.smartcampus.modules.resource.service;
 import com.smartcampus.modules.resource.dto.ResourceDTO;
 import com.smartcampus.modules.resource.dto.ResourceSearchDTO;
 import com.smartcampus.modules.resource.dto.AvailabilityWindowDTO;
-import com.smartcampus.modules.resource.entity.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 public interface ResourceService {
 
@@ -34,13 +35,12 @@ public interface ResourceService {
     AvailabilityWindowDTO addAvailabilityWindow(AvailabilityWindowDTO windowDTO);
     void removeAvailabilityWindow(Long windowId);
     boolean isResourceAvailable(Long resourceId, Integer dayOfWeek,
-                                java.time.LocalTime startTime, java.time.LocalTime endTime);
+                                LocalTime startTime, LocalTime endTime);
 
     // Validation
     boolean validateResource(ResourceDTO resourceDTO);
-    String generateResourceDescription(ResourceDTO resourceDTO);
 
     // Statistics
     long getActiveResourcesCount();
-    java.util.Map<String, Long> getResourceTypeStatistics();
+    Map<String, Long> getResourceTypeStatistics();
 }

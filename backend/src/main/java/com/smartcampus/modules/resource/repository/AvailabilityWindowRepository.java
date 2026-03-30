@@ -13,9 +13,7 @@ import java.util.List;
 public interface AvailabilityWindowRepository extends JpaRepository<AvailabilityWindow, Long> {
 
     List<AvailabilityWindow> findByResourceId(Long resourceId);
-
     List<AvailabilityWindow> findByResourceIdAndDayOfWeek(Long resourceId, Integer dayOfWeek);
-
     void deleteByResourceId(Long resourceId);
 
     @Query("SELECT COUNT(a) > 0 FROM AvailabilityWindow a WHERE a.resourceId = :resourceId " +

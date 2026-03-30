@@ -19,7 +19,7 @@ public class ResourceDTO {
     private String name;
 
     @NotBlank(message = "Resource type is required")
-    private String resourceType;
+    private String resourceType;  // Direct string, not ID
 
     @NotNull(message = "Capacity is required")
     @Min(value = 1, message = "Capacity must be at least 1")
@@ -29,14 +29,22 @@ public class ResourceDTO {
     @NotBlank(message = "Location is required")
     private String location;
 
+    private String building;
+    private String floor;
     private String status;
-
     private String description;
-
-    @Pattern(regexp = "^(http|https)://.*$", message = "Invalid image URL format")
     private String imageUrl;
 
-    // For response only
+    // Amenities
+    private Boolean isAirConditioned;
+    private Boolean hasProjector;
+    private Boolean hasSmartBoard;
+    private Boolean hasWifi;
+    private Boolean hasPowerOutlets;
+
+    // Timestamps
     private String createdAt;
     private String updatedAt;
+    private Long createdBy;
+    private Long updatedBy;
 }

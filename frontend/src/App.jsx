@@ -15,9 +15,15 @@ import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
 
+// ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
+import ResourceList from './pages/Resources/ResourceList'
+
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, TicketsPage, AdminUsersPage,
+  // ResourcesPage, // ← REMOVED - Using real component now
+  BookingsPage, 
+  TicketsPage, 
+  AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -76,16 +82,25 @@ export default function App() {
               </ProtectedRoute>
             } />
 
-            {/* Module pages (stubs — other members fill these in) */}
+            {/* ========== MODULE PAGES ========== */}
+            {/* Member 1 - Facilities & Assets Catalogue Module */}
             <Route path="/resources" element={
-              <ProtectedRoute><ResourcesPage /></ProtectedRoute>
+              <ProtectedRoute>
+                <ResourceList />
+              </ProtectedRoute>
             } />
+            
+            {/* Member 2 - Bookings Module (stub - to be replaced) */}
             <Route path="/bookings" element={
               <ProtectedRoute><BookingsPage /></ProtectedRoute>
             } />
+            
+            {/* Member 3 - Tickets Module (stub - to be replaced) */}
             <Route path="/tickets" element={
               <ProtectedRoute><TicketsPage /></ProtectedRoute>
             } />
+            
+            {/* Admin Users Management */}
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>
             } />

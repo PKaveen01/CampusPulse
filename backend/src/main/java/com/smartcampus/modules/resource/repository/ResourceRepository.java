@@ -22,13 +22,21 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
 
     List<Resource> findByStatus(String status);
 
+    // FIXED: Changed from findByResourceTypeId to findByResourceType
     List<Resource> findByResourceType(String resourceType);
 
-    Page<Resource> findByStatusAndResourceType(String status, String resourceType, Pageable pageable);
-
-    @Query("SELECT r FROM Resource r WHERE r.capacity >= :minCapacity AND r.status = :status")
-    List<Resource> findAvailableResources(@Param("minCapacity") Integer minCapacity, @Param("status") String status);
+    @Query("SELECT r FROM Resource r WHERE r.resourceType = :type")
+    List<Resource> findResourcesByType(@Param("type") String type);
 
     @Query("SELECT COUNT(r) FROM Resource r WHERE r.status = 'ACTIVE'")
     long countActiveResources();
+
+    // Search by name containing text
+    List<Resource> findByNameContainingIgnoreCase(String name);
+
+    // Search by location containing text
+    List<Resource> findByLocationContainingIgnoreCase(String location);
+
+    // Find by capacity range
+    List<Resource> findByCapacityBetween(Integer minCapacity, Integer maxCapacity);
 }

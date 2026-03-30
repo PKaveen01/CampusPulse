@@ -12,8 +12,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,26 +31,25 @@ public class ResourceController {
     // ==================== CRUD Operations ====================
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ResourceDTO> createResource(@Valid @RequestBody ResourceDTO resourceDTO) {
-        ResourceDTO createdResource = resourceService.createResource(resourceDTO);
-        return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
+        ResourceDTO created = resourceService.createResource(resourceDTO);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ResourceDTO> getResourceById(@PathVariable Long id) {
-        ResourceDTO resource = resourceService.getResourceById(id);
-        return ResponseEntity.ok(resource);
+        return ResponseEntity.ok(resourceService.getResourceById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResourceDTO> updateResource(
-            @PathVariable Long id,
-            @Valid @RequestBody ResourceDTO resourceDTO) {
-        ResourceDTO updatedResource = resourceService.updateResource(id, resourceDTO);
-        return ResponseEntity.ok(updatedResource);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ResourceDTO> updateResource(@PathVariable Long id, @Valid @RequestBody ResourceDTO resourceDTO) {
+        return ResponseEntity.ok(resourceService.updateResource(id, resourceDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
         resourceService.deleteResource(id);
         return ResponseEntity.noContent().build();
@@ -56,15 +57,8 @@ public class ResourceController {
 
     @GetMapping
     public ResponseEntity<Page<ResourceDTO>> getAllResources(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ResourceDTO> resources = resourceService.getAllResourcesPaginated(pageable);
-        return ResponseEntity.ok(resources);
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<ResourceDTO>> getAllResourcesList() {
-        List<ResourceDTO> resources = resourceService.getAllResources();
-        return ResponseEntity.ok(resources);
+            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(resourceService.getAllResourcesPaginated(pageable));
     }
 
     // ==================== Search Operations ====================
@@ -72,63 +66,55 @@ public class ResourceController {
     @PostMapping("/search")
     public ResponseEntity<Page<ResourceDTO>> searchResources(
             @RequestBody ResourceSearchDTO searchDTO,
-            @PageableDefault(size = 10) Pageable pageable) {
-        Page<ResourceDTO> results = resourceService.searchResources(searchDTO, pageable);
-        return ResponseEntity.ok(results);
+            @PageableDefault(size = 12) Pageable pageable) {
+        return ResponseEntity.ok(resourceService.searchResources(searchDTO, pageable));
     }
 
     @GetMapping("/type/{type}")
     public ResponseEntity<List<ResourceDTO>> getResourcesByType(@PathVariable String type) {
-        List<ResourceDTO> resources = resourceService.getResourcesByType(type);
-        return ResponseEntity.ok(resources);
+        return ResponseEntity.ok(resourceService.getResourcesByType(type));
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ResourceDTO>> getResourcesByStatus(@PathVariable String status) {
-        List<ResourceDTO> resources = resourceService.getResourcesByStatus(status);
-        return ResponseEntity.ok(resources);
+        return ResponseEntity.ok(resourceService.getResourcesByStatus(status));
     }
 
     // ==================== Status Management ====================
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ResourceDTO> updateResourceStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
-        ResourceDTO updatedResource = resourceService.updateResourceStatus(id, status);
-        return ResponseEntity.ok(updatedResource);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ResourceDTO> updateResourceStatus(@PathVariable Long id, @RequestParam String status) {
+        return ResponseEntity.ok(resourceService.updateResourceStatus(id, status));
     }
 
     @PostMapping("/{id}/out-of-service")
-    public ResponseEntity<ResourceDTO> markAsOutOfService(
-            @PathVariable Long id,
-            @RequestParam String reason) {
-        ResourceDTO updatedResource = resourceService.markAsOutOfService(id, reason);
-        return ResponseEntity.ok(updatedResource);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ResourceDTO> markAsOutOfService(@PathVariable Long id, @RequestParam String reason) {
+        return ResponseEntity.ok(resourceService.markAsOutOfService(id, reason));
     }
 
     @PostMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ResourceDTO> markAsActive(@PathVariable Long id) {
-        ResourceDTO updatedResource = resourceService.markAsActive(id);
-        return ResponseEntity.ok(updatedResource);
+        return ResponseEntity.ok(resourceService.markAsActive(id));
     }
 
     // ==================== Availability Management ====================
 
     @GetMapping("/{id}/availability")
     public ResponseEntity<List<AvailabilityWindowDTO>> getAvailabilityWindows(@PathVariable Long id) {
-        List<AvailabilityWindowDTO> windows = resourceService.getAvailabilityWindows(id);
-        return ResponseEntity.ok(windows);
+        return ResponseEntity.ok(resourceService.getAvailabilityWindows(id));
     }
 
     @PostMapping("/availability")
-    public ResponseEntity<AvailabilityWindowDTO> addAvailabilityWindow(
-            @Valid @RequestBody AvailabilityWindowDTO windowDTO) {
-        AvailabilityWindowDTO savedWindow = resourceService.addAvailabilityWindow(windowDTO);
-        return new ResponseEntity<>(savedWindow, HttpStatus.CREATED);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<AvailabilityWindowDTO> addAvailabilityWindow(@Valid @RequestBody AvailabilityWindowDTO windowDTO) {
+        return new ResponseEntity<>(resourceService.addAvailabilityWindow(windowDTO), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/availability/{windowId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> removeAvailabilityWindow(@PathVariable Long windowId) {
         resourceService.removeAvailabilityWindow(windowId);
         return ResponseEntity.noContent().build();
@@ -142,15 +128,10 @@ public class ResourceController {
             @RequestParam String endTime) {
 
         boolean isAvailable = resourceService.isResourceAvailable(
-                id,
-                dayOfWeek,
-                java.time.LocalTime.parse(startTime),
-                java.time.LocalTime.parse(endTime)
-        );
+                id, dayOfWeek, LocalTime.parse(startTime), LocalTime.parse(endTime));
 
         Map<String, Boolean> response = new HashMap<>();
         response.put("available", isAvailable);
-
         return ResponseEntity.ok(response);
     }
 
@@ -158,15 +139,27 @@ public class ResourceController {
 
     @GetMapping("/statistics/count")
     public ResponseEntity<Map<String, Long>> getActiveResourcesCount() {
-        long count = resourceService.getActiveResourcesCount();
         Map<String, Long> response = new HashMap<>();
-        response.put("activeResources", count);
+        response.put("activeResources", resourceService.getActiveResourcesCount());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/statistics/types")
     public ResponseEntity<Map<String, Long>> getResourceTypeStatistics() {
-        Map<String, Long> statistics = resourceService.getResourceTypeStatistics();
-        return ResponseEntity.ok(statistics);
+        return ResponseEntity.ok(resourceService.getResourceTypeStatistics());
+    }
+
+    // ==================== Reference Data ====================
+
+    @GetMapping("/types")
+    public ResponseEntity<List<String>> getResourceTypes() {
+        List<String> types = List.of("Lecture Hall", "Meeting Room", "Laboratory", "Equipment", "Study Room", "Auditorium", "Seminar Room");
+        return ResponseEntity.ok(types);
+    }
+
+    @GetMapping("/available/now")
+    public ResponseEntity<List<ResourceDTO>> getAvailableResourcesNow() {
+        // This would need additional logic to check current availability
+        return ResponseEntity.ok(resourceService.getResourcesByStatus("ACTIVE"));
     }
 }

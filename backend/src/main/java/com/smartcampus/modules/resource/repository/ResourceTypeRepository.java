@@ -11,8 +11,6 @@ import java.util.Optional;
 public interface ResourceTypeRepository extends JpaRepository<ResourceType, Long> {
 
     Optional<ResourceType> findByName(String name);
-
     List<ResourceType> findByIsActiveTrue();
-
     boolean existsByName(String name);
 }
