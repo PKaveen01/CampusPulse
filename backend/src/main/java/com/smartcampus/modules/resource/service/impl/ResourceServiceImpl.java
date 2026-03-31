@@ -294,6 +294,124 @@ public class ResourceServiceImpl implements ResourceService {
         return statistics;
     }
 
+    // ==================== NEW ANALYTICS METHODS ====================
+
+    @Override
+    public Map<String, Object> getResourceAnalytics() {
+        log.info("Fetching resource analytics");
+
+        Map<String, Object> analytics = new LinkedHashMap<>();
+        List<Resource> allResources = resourceRepository.findAll();
+
+        // Total resources
+        long totalResources = allResources.size();
+        analytics.put("totalResources", totalResources);
+
+        // Active vs Inactive
+        long activeResources = allResources.stream()
+                .filter(r -> "ACTIVE".equals(r.getStatus()))
+                .count();
+        long outOfService = allResources.stream()
+                .filter(r -> "OUT_OF_SERVICE".equals(r.getStatus()))
+                .count();
+        long maintenance = allResources.stream()
+                .filter(r -> "MAINTENANCE".equals(r.getStatus()))
+                .count();
+
+        analytics.put("activeResources", activeResources);
+        analytics.put("outOfServiceResources", outOfService);
+        analytics.put("maintenanceResources", maintenance);
+
+        // Utilization rate (active / total)
+        double utilizationRate = totalResources > 0 ? (double) activeResources / totalResources * 100 : 0;
+        analytics.put("utilizationRate", Math.round(utilizationRate * 10) / 10.0);
+
+        // Resources by type
+        Map<String, Long> resourcesByType = allResources.stream()
+                .filter(r -> r.getResourceType() != null)
+                .collect(Collectors.groupingBy(
+                        Resource::getResourceType,
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+        analytics.put("resourcesByType", resourcesByType);
+
+        // Resources by building
+        Map<String, Long> resourcesByBuilding = allResources.stream()
+                .filter(r -> r.getBuilding() != null && !r.getBuilding().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Resource::getBuilding,
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+        analytics.put("resourcesByBuilding", resourcesByBuilding);
+
+        // Resources by capacity range
+        Map<String, Long> resourcesByCapacity = new LinkedHashMap<>();
+        resourcesByCapacity.put("Small (1-10)", allResources.stream().filter(r -> r.getCapacity() <= 10).count());
+        resourcesByCapacity.put("Medium (11-50)", allResources.stream().filter(r -> r.getCapacity() > 10 && r.getCapacity() <= 50).count());
+        resourcesByCapacity.put("Large (51+)", allResources.stream().filter(r -> r.getCapacity() > 50).count());
+        analytics.put("resourcesByCapacity", resourcesByCapacity);
+
+        // Amenities count
+        long withAC = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getIsAirConditioned())).count();
+        long withProjector = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasProjector())).count();
+        long withSmartBoard = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasSmartBoard())).count();
+        long withWifi = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasWifi())).count();
+        long withPower = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasPowerOutlets())).count();
+
+        Map<String, Long> amenities = new LinkedHashMap<>();
+        amenities.put("Air Conditioned", withAC);
+        amenities.put("Projector", withProjector);
+        amenities.put("Smart Board", withSmartBoard);
+        amenities.put("WiFi", withWifi);
+        amenities.put("Power Outlets", withPower);
+        analytics.put("amenities", amenities);
+
+        return analytics;
+    }
+
+    @Override
+    public List<ResourceDTO> getResourcesNeedingMaintenance() {
+        log.info("Fetching resources needing maintenance");
+
+        List<Resource> allResources = resourceRepository.findAll();
+
+        // For now, resources in MAINTENANCE status need attention
+        // You can enhance this with booking count logic later
+        return allResources.stream()
+                .filter(r -> "MAINTENANCE".equals(r.getStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Double> getUtilizationByType() {
+        log.info("Calculating utilization by resource type");
+
+        List<Resource> allResources = resourceRepository.findAll();
+        Map<String, Long> totalByType = allResources.stream()
+                .filter(r -> r.getResourceType() != null)
+                .collect(Collectors.groupingBy(Resource::getResourceType, Collectors.counting()));
+
+        Map<String, Long> activeByType = allResources.stream()
+                .filter(r -> "ACTIVE".equals(r.getStatus()))
+                .filter(r -> r.getResourceType() != null)
+                .collect(Collectors.groupingBy(Resource::getResourceType, Collectors.counting()));
+
+        Map<String, Double> utilizationByType = new LinkedHashMap<>();
+
+        for (Map.Entry<String, Long> entry : totalByType.entrySet()) {
+            String type = entry.getKey();
+            long total = entry.getValue();
+            long active = activeByType.getOrDefault(type, 0L);
+            double utilization = total > 0 ? (double) active / total * 100 : 0;
+            utilizationByType.put(type, Math.round(utilization * 10) / 10.0);
+        }
+
+        return utilizationByType;
+    }
+
     // ==================== Private Helper Methods ====================
 
     private Specification<Resource> buildSearchSpecification(ResourceSearchDTO searchDTO) {

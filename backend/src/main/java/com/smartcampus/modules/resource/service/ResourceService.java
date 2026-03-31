@@ -43,4 +43,24 @@ public interface ResourceService {
     // Statistics
     long getActiveResourcesCount();
     Map<String, Long> getResourceTypeStatistics();
+
+    // ========== NEW ANALYTICS METHODS ==========
+
+    /**
+     * Get complete analytics dashboard data
+     * @return Map containing all analytics data (total, active, by type, etc.)
+     */
+    Map<String, Object> getResourceAnalytics();
+
+    /**
+     * Get resources needing maintenance based on usage
+     * @return List of resources that need maintenance
+     */
+    List<ResourceDTO> getResourcesNeedingMaintenance();
+
+    /**
+     * Get utilization statistics for each resource type
+     * @return Map of resource type to utilization percentage
+     */
+    Map<String, Double> getUtilizationByType();
 }

@@ -69,3 +69,31 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; }
+
+/* Fix for dropdown options in dark theme */
+select {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+select option:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* For better visibility in dark theme */
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,142,247,0.2);
+}

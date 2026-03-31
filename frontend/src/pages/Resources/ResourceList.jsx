@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, RefreshCw, BarChart3 } from 'lucide-react';
 import ResourceCard from '../../components/resources/ResourceCard';
 import ResourceSearch from '../../components/resources/ResourceSearch';
 import ResourceForm from './ResourceForm';
@@ -7,6 +8,7 @@ import resourceService from '../../services/resourceService';
 import { useAuth } from '../../context/AuthContext';
 
 const ResourceList = () => {
+    const navigate = useNavigate();
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -126,6 +128,10 @@ const ResourceList = () => {
         console.log('View details for:', resource);
     };
 
+    const handleAnalytics = () => {
+        navigate('/resources/analytics');
+    };
+
     useEffect(() => {
         fetchResources();
         fetchResourceTypes();
@@ -144,6 +150,36 @@ const ResourceList = () => {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
+                    {/* Analytics Button */}
+                    <button
+                        onClick={handleAnalytics}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '10px 20px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-sm)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontSize: 14,
+                            fontWeight: 500
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = 'var(--accent)';
+                            e.currentTarget.style.color = 'var(--accent)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                    >
+                        <BarChart3 size={16} /> Analytics
+                    </button>
+
+                    {/* Refresh Button */}
                     <button
                         onClick={() => fetchResources(pagination.page)}
                         style={{
@@ -171,6 +207,8 @@ const ResourceList = () => {
                     >
                         <RefreshCw size={16} /> Refresh
                     </button>
+
+                    {/* Add Resource Button - Admin Only */}
                     {isAdmin && (
                         <button
                             onClick={() => setShowForm(true)}

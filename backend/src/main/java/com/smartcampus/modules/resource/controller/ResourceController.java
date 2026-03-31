@@ -149,6 +149,38 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.getResourceTypeStatistics());
     }
 
+    // ==================== NEW ANALYTICS ENDPOINTS ====================
+
+    /**
+     * Get complete resource analytics dashboard data
+     * Returns: total resources, active count, utilization rate, resources by type, by building, by capacity, amenities count
+     */
+    @GetMapping("/analytics/dashboard")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<Map<String, Object>> getResourceAnalytics() {
+        return ResponseEntity.ok(resourceService.getResourceAnalytics());
+    }
+
+    /**
+     * Get resources that need maintenance
+     * Returns list of resources with MAINTENANCE status
+     */
+    @GetMapping("/analytics/maintenance-needed")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<ResourceDTO>> getResourcesNeedingMaintenance() {
+        return ResponseEntity.ok(resourceService.getResourcesNeedingMaintenance());
+    }
+
+    /**
+     * Get utilization percentage by resource type
+     * Returns map of resource type to utilization percentage
+     */
+    @GetMapping("/analytics/utilization-by-type")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<Map<String, Double>> getUtilizationByType() {
+        return ResponseEntity.ok(resourceService.getUtilizationByType());
+    }
+
     // ==================== Reference Data ====================
 
     @GetMapping("/types")

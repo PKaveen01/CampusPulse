@@ -17,10 +17,10 @@ import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
 
 // ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
 import ResourceList from './pages/Resources/ResourceList'
+import ResourceAnalytics from './components/resources/ResourceAnalytics'  // ← ADD THIS
 
 // Stub pages (other members)
 import {
-  // ResourcesPage, // ← REMOVED - Using real component now
   BookingsPage, 
   TicketsPage, 
   AdminUsersPage,
@@ -90,12 +90,19 @@ export default function App() {
               </ProtectedRoute>
             } />
             
-            {/* Member 2 - Bookings Module (stub - to be replaced) */}
+            {/* Member 1 - Resource Analytics - MUST COME BEFORE /resources */}
+            <Route path="/resources/analytics" element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+                <ResourceAnalytics />
+              </ProtectedRoute>
+            } />
+            
+            {/* Member 2 - Bookings Module (stub) */}
             <Route path="/bookings" element={
               <ProtectedRoute><BookingsPage /></ProtectedRoute>
             } />
             
-            {/* Member 3 - Tickets Module (stub - to be replaced) */}
+            {/* Member 3 - Tickets Module (stub) */}
             <Route path="/tickets" element={
               <ProtectedRoute><TicketsPage /></ProtectedRoute>
             } />
