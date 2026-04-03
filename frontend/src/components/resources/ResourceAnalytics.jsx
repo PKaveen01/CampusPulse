@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown, Calendar, Clock, BarChart3, PieChart, Downloa
 const ResourceAnalytics = ({ onClose }) => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [timeRange, setTimeRange] = useState('week'); // week, month, year
+    const [timeRange, setTimeRange] = useState('week');
 
     useEffect(() => {
         fetchStats();
@@ -13,13 +13,11 @@ const ResourceAnalytics = ({ onClose }) => {
     const fetchStats = async () => {
         setLoading(true);
         try {
-            // Use the correct endpoint from your backend
             const response = await fetch(`/api/resources/analytics/dashboard`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
             });
             const data = await response.json();
-            
-            // Transform data to match your component's expected format
+
             const transformedStats = {
                 totalResources: data.totalResources || 0,
                 activeResources: data.activeResources || 0,
@@ -31,8 +29,7 @@ const ResourceAnalytics = ({ onClose }) => {
                 bookingTrendData: [],
                 maxBookings: 1
             };
-            
-            // Add resources by type as top resources
+
             if (data.resourcesByType && Object.keys(data.resourcesByType).length > 0) {
                 transformedStats.topResources = Object.entries(data.resourcesByType)
                     .map(([type, count]) => ({
@@ -42,17 +39,18 @@ const ResourceAnalytics = ({ onClose }) => {
                     }))
                     .sort((a, b) => b.bookingCount - a.bookingCount)
                     .slice(0, 5);
+
                 transformedStats.maxBookings = transformedStats.topResources[0]?.bookingCount || 1;
             }
-            
-            // Generate mock booking trend data (you can replace with real data later)
+
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             transformedStats.bookingTrendData = days.map((day, i) => ({
                 label: day,
                 count: Math.floor(Math.random() * 20) + 5
             }));
+
             transformedStats.maxDailyBookings = Math.max(...transformedStats.bookingTrendData.map(d => d.count));
-            
+
             setStats(transformedStats);
         } catch (error) {
             console.error('Failed to fetch analytics:', error);
@@ -72,6 +70,16 @@ const ResourceAnalytics = ({ onClose }) => {
             </div>
         );
     }
+
+    // 🔥 Prepare line chart points
+    const chartWidth = 600;
+    const chartHeight = 120;
+
+    const points = stats?.bookingTrendData?.map((day, index) => {
+        const x = (index / (stats.bookingTrendData.length - 1)) * chartWidth;
+        const y = chartHeight - (day.count / (stats.maxDailyBookings || 1)) * chartHeight;
+        return `${x},${y}`;
+    }).join(' ');
 
     return (
         <div style={{
@@ -113,6 +121,7 @@ const ResourceAnalytics = ({ onClose }) => {
                 </div>
 
                 <div style={{ padding: 24 }}>
+
                     {/* Time Range Selector */}
                     <div style={{ display: 'flex', gap: 12, marginBottom: 24, justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -135,6 +144,7 @@ const ResourceAnalytics = ({ onClose }) => {
                                 </button>
                             ))}
                         </div>
+
                         <button
                             onClick={exportReport}
                             style={{
@@ -160,75 +170,55 @@ const ResourceAnalytics = ({ onClose }) => {
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Resources</div>
                             <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats?.totalResources || 0}</div>
                         </div>
+
                         <div style={{ background: 'rgba(79,142,247,0.1)', borderRadius: 'var(--radius-sm)', padding: 16, borderLeft: '3px solid #4f8ef7' }}>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Active Resources</div>
                             <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats?.activeResources || 0}</div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>of {stats?.totalResources} total</div>
                         </div>
+
                         <div style={{ background: 'rgba(251,191,36,0.1)', borderRadius: 'var(--radius-sm)', padding: 16, borderLeft: '3px solid #fbbf24' }}>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Utilization Rate</div>
                             <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats?.utilizationRate || 0}%</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Active vs Total</div>
                         </div>
+
                         <div style={{ background: 'rgba(248,113,113,0.1)', borderRadius: 'var(--radius-sm)', padding: 16, borderLeft: '3px solid #f87171' }}>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Maintenance</div>
                             <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats?.maintenanceDue || 0}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Resources needing attention</div>
                         </div>
                     </div>
 
-                    {/* Top Resources by Type */}
-                    <div style={{ marginBottom: 24 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Resources by Type</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            {stats?.topResources?.map((resource, idx) => (
-                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <div style={{ width: 30, fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>#{idx + 1}</div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 500 }}>{resource.name}</div>
-                                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{resource.type}</div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontWeight: 600 }}>{resource.bookingCount}</div>
-                                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>resources</div>
-                                    </div>
-                                    <div style={{ width: 100 }}>
-                                        <div style={{
-                                            height: 6,
-                                            background: 'rgba(255,255,255,0.1)',
-                                            borderRadius: 3,
-                                            overflow: 'hidden'
-                                        }}>
-                                            <div style={{
-                                                width: `${(resource.bookingCount / stats?.maxBookings) * 100}%`,
-                                                height: '100%',
-                                                background: 'linear-gradient(90deg, var(--accent), var(--accent-2))',
-                                                borderRadius: 3
-                                            }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Booking Trend Chart */}
+                    {/* 🔥 LINE GRAPH */}
                     <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Activity Trend (Last 7 Days)</h3>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
+                            Activity Trend (Last 7 Days)
+                        </h3>
+
+                        <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+                            <polyline
+                                fill="none"
+                                stroke="url(#gradient)"
+                                strokeWidth="3"
+                                points={points}
+                            />
+
+                            <defs>
+                                <linearGradient id="gradient" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stopColor="var(--accent)" />
+                                    <stop offset="100%" stopColor="var(--accent-2)" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                             {stats?.bookingTrendData?.map((day, idx) => (
-                                <div key={idx} style={{ flex: 1, textAlign: 'center' }}>
-                                    <div style={{
-                                        height: `${(day.count / (stats?.maxDailyBookings || 1)) * 100}px`,
-                                        background: 'linear-gradient(180deg, var(--accent), var(--accent-2))',
-                                        borderRadius: '4px 4px 0 0',
-                                        transition: 'height 0.3s ease'
-                                    }} />
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{day.label}</div>
-                                </div>
+                                <span key={idx} style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                                    {day.label}
+                                </span>
                             ))}
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
