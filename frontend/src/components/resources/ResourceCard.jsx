@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, Users, MapPin, Edit, Trash2, Power, PowerOff, Calendar, 
   Wind, Tv, Wifi, Plug, Smartphone, Clock, AlertTriangle, CheckCircle, 
-  BookOpen, Wrench, History, BarChart3 
+  BookOpen, Wrench, History, BarChart3, Eye, Star, TrendingUp 
 } from 'lucide-react';
 
 const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetails, onViewHistory, isAdmin }) => {
+  const [imageError, setImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
-  // Enhanced status configurations
+  // Status configurations
   const statusConfig = {
     ACTIVE: { 
       bg: 'rgba(52,211,153,0.15)', 
@@ -21,7 +23,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
       color: '#fbbf24', 
       label: 'Maintenance', 
       icon: <Wrench size={12} />,
-      description: 'Under repair - Technician assigned'
+      description: 'Under repair'
     },
     OUT_OF_SERVICE: { 
       bg: 'rgba(248,113,113,0.15)', 
@@ -48,7 +50,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
   
   const style = statusConfig[resource.status] || statusConfig.ACTIVE;
 
-  // Smart tagging system for amenities
+  // Amenities with icons and categories
   const amenities = [];
   if (resource.isAirConditioned) amenities.push({ name: 'AC', icon: <Wind size={12} />, category: 'comfort' });
   if (resource.hasProjector) amenities.push({ name: 'Projector', icon: <Tv size={12} />, category: 'av' });
@@ -56,9 +58,8 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
   if (resource.hasWifi) amenities.push({ name: 'WiFi', icon: <Wifi size={12} />, category: 'connectivity' });
   if (resource.hasPowerOutlets) amenities.push({ name: 'Power', icon: <Plug size={12} />, category: 'utility' });
 
-  // Calculate usage percentage for predictive maintenance
-  const usagePercentage = resource.totalBookings ? (resource.totalBookings / 100) * 100 : 0;
-  const needsMaintenanceSoon = usagePercentage > 80;
+  // Calculate popularity score (mock - can be replaced with real data)
+  const popularityScore = resource.totalBookings ? Math.min(Math.floor(resource.totalBookings / 10), 5) : 0;
 
   return (
     <div 
@@ -69,36 +70,53 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
         overflow: 'hidden',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-        position: 'relative'
+        position: 'relative',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: isHovered ? 'var(--shadow-glow)' : 'none'
       }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.borderColor = 'var(--accent)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.borderColor = resource.status === 'MAINTENANCE' ? 'rgba(251,191,36,0.3)' : 'var(--border)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onViewDetails(resource)}
     >
-      {/* Predictive Maintenance Warning Badge */}
-      {needsMaintenanceSoon && resource.status === 'ACTIVE' && (
+      {/* Popularity Badge */}
+      {popularityScore >= 3 && resource.status === 'ACTIVE' && (
         <div style={{
           position: 'absolute',
           top: 12,
           left: 12,
           zIndex: 10,
-          background: 'rgba(251,191,36,0.9)',
-          color: '#000',
-          padding: '2px 8px',
+          background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+          color: 'white',
+          padding: '2px 10px',
           borderRadius: 20,
-          fontSize: 9,
+          fontSize: 10,
           fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
-          gap: 4
+          gap: 4,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+        }}>
+          <Star size={10} fill="white" /> Popular
+        </div>
+      )}
+
+      {/* Maintenance Warning Badge */}
+      {resource.status === 'ACTIVE' && resource.totalBookings > 80 && (
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          zIndex: 10,
+          background: 'rgba(251,191,36,0.95)',
+          color: '#000',
+          padding: '2px 10px',
+          borderRadius: 20,
+          fontSize: 10,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
         }}>
           <Clock size={10} /> Maintenance Soon
         </div>
@@ -106,28 +124,42 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
 
       {/* Image Section */}
       <div style={{
-        height: 140,
+        height: 160,
         background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        overflow: 'hidden'
       }}>
-        {resource.image_url ? (
+        {resource.imageUrl && !imageError ? (
           <img 
-            src={resource.image_url} 
+            src={resource.imageUrl} 
             alt={resource.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = 'none';
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              transition: 'transform 0.3s ease',
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)'
             }}
+            onError={() => setImageError(true)}
           />
         ) : (
-          <Building2 size={48} style={{ color: 'white', opacity: 0.5 }} />
+          <Building2 size={56} style={{ color: 'white', opacity: 0.4 }} />
         )}
         
-        {/* Enhanced Status Badge */}
+        {/* Overlay Gradient */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 60,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)'
+        }} />
+        
+        {/* Status Badge */}
         <div style={{
           position: 'absolute',
           top: 12,
@@ -135,19 +167,20 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
-          gap: 4
+          gap: 6
         }}>
           <span style={{
             padding: '4px 12px',
             borderRadius: 20,
             fontSize: 11,
             fontWeight: 600,
-            background: style.bg,
+            background: `${style.bg}cc`,
             color: style.color,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
-            gap: 4
+            gap: 6,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
             {style.icon}
             {style.label}
@@ -156,48 +189,53 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
       </div>
       
       {/* Content */}
-      <div style={{ padding: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+      <div style={{ padding: 18 }}>
+        {/* Title Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
           <h3 style={{ 
-            fontSize: 15, 
+            fontSize: 16, 
             fontWeight: 600, 
             color: 'var(--text-primary)',
-            flex: 1
+            flex: 1,
+            lineHeight: 1.4
           }}>
             {resource.name}
           </h3>
-          {/* Usage Counter - shows booking count */}
+          
+          {/* Booking Count Badge */}
           {resource.totalBookings > 0 && (
             <span style={{
               fontSize: 10,
               color: 'var(--text-muted)',
-              background: 'rgba(255,255,255,0.05)',
-              padding: '2px 6px',
-              borderRadius: 12,
+              background: 'rgba(255,255,255,0.08)',
+              padding: '2px 8px',
+              borderRadius: 20,
               display: 'flex',
               alignItems: 'center',
-              gap: 3
+              gap: 4,
+              whiteSpace: 'nowrap'
             }}>
-              <BarChart3 size={10} />
+              <TrendingUp size={10} />
               {resource.totalBookings} bookings
             </span>
           )}
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+        {/* Details */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13 }}>
             <Users size={14} />
             <span>Capacity: {resource.capacity} people</span>
-            {/* Smart capacity suggestion indicator */}
             {resource.capacity <= 10 && (
               <span style={{
                 fontSize: 9,
                 background: 'rgba(52,211,153,0.15)',
                 color: '#34d399',
-                padding: '1px 6px',
-                borderRadius: 10
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontWeight: 500
               }}>
-                Small Group
+                Intimate
               </span>
             )}
             {resource.capacity > 50 && (
@@ -205,85 +243,70 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
                 fontSize: 9,
                 background: 'rgba(79,142,247,0.15)',
                 color: '#4f8ef7',
-                padding: '1px 6px',
-                borderRadius: 10
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontWeight: 500
               }}>
-                Large Venue
+                Large
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13 }}>
             <MapPin size={14} />
             <span>{resource.building ? `${resource.building}, ` : ''}{resource.location}</span>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+            <span style={{ 
+              padding: '2px 8px', 
+              background: 'rgba(79,142,247,0.1)', 
+              borderRadius: 12,
+              fontSize: 10,
+              fontWeight: 500
+            }}>
+              {resource.resourceType}
+            </span>
+          </div>
         </div>
 
-        {/* Smart Tagging System - Categorized Amenities */}
+        {/* Amenities Section - Simplified & Clean */}
         {amenities.length > 0 && (
           <div style={{
-            marginBottom: 16,
-            paddingTop: 8,
-            borderTop: '1px solid var(--border)'
+            marginBottom: 18,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8
           }}>
-            {/* Comfort amenities */}
-            {amenities.filter(a => a.category === 'comfort').length > 0 && (
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.5px' }}>COMFORT</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {amenities.filter(a => a.category === 'comfort').map((amenity, idx) => (
-                    <span key={idx} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      padding: '2px 8px', background: 'rgba(96,165,250,0.1)',
-                      borderRadius: 12, fontSize: 10, color: '#60a5fa'
-                    }}>
-                      {amenity.icon} {amenity.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* AV amenities */}
-            {amenities.filter(a => a.category === 'av').length > 0 && (
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.5px' }}>AUDIO VISUAL</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {amenities.filter(a => a.category === 'av').map((amenity, idx) => (
-                    <span key={idx} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      padding: '2px 8px', background: 'rgba(251,191,36,0.1)',
-                      borderRadius: 12, fontSize: 10, color: '#fbbf24'
-                    }}>
-                      {amenity.icon} {amenity.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Connectivity amenities */}
-            {amenities.filter(a => a.category === 'connectivity').length > 0 && (
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '0.5px' }}>CONNECTIVITY</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {amenities.filter(a => a.category === 'connectivity').map((amenity, idx) => (
-                    <span key={idx} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      padding: '2px 8px', background: 'rgba(52,211,153,0.1)',
-                      borderRadius: 12, fontSize: 10, color: '#34d399'
-                    }}>
-                      {amenity.icon} {amenity.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            {amenities.map((amenity, idx) => (
+              <span key={idx} style={{
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: 5,
+                padding: '4px 10px', 
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: 20, 
+                fontSize: 11, 
+                color: 'var(--text-secondary)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.15)';
+                e.currentTarget.style.color = 'var(--accent)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}>
+                {amenity.icon} {amenity.name}
+              </span>
+            ))}
           </div>
         )}
         
-        {/* Admin Actions */}
+        {/* Action Buttons */}
         {isAdmin ? (
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(resource); }}
               style={{
@@ -292,17 +315,26 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                padding: '6px 12px',
+                padding: '8px 12px',
                 background: 'rgba(79,142,247,0.1)',
                 border: '1px solid rgba(79,142,247,0.2)',
                 borderRadius: 'var(--radius-sm)',
                 color: 'var(--accent)',
                 cursor: 'pointer',
-                fontSize: 11,
-                fontWeight: 500
+                fontSize: 12,
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.2)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Edit size={12} /> Edit
+              <Edit size={13} /> Edit
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onStatusToggle(resource); }}
@@ -312,7 +344,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 6,
-                padding: '6px 12px',
+                padding: '8px 12px',
                 background: resource.status === 'ACTIVE' 
                   ? 'rgba(248,113,113,0.1)' 
                   : 'rgba(52,211,153,0.1)',
@@ -320,54 +352,84 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
                   ? 'rgba(248,113,113,0.2)' 
                   : 'rgba(52,211,153,0.2)'}`,
                 borderRadius: 'var(--radius-sm)',
-                color: resource.status === 'ACTIVE' ? 'var(--danger)' : 'var(--success)',
+                color: resource.status === 'ACTIVE' ? '#f87171' : '#34d399',
                 cursor: 'pointer',
-                fontSize: 11,
-                fontWeight: 500
+                fontSize: 12,
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              {resource.status === 'ACTIVE' ? <PowerOff size={12} /> : <Power size={12} />}
+              {resource.status === 'ACTIVE' ? <PowerOff size={13} /> : <Power size={13} />}
               {resource.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onViewHistory(resource); }}
               style={{
-                padding: '6px 12px',
+                padding: '8px 12px',
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-sm)',
                 color: 'var(--text-muted)',
                 cursor: 'pointer',
-                fontSize: 11
+                fontSize: 12,
+                transition: 'all 0.2s'
               }}
-              title="View Audit Log"
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.1)';
+                e.currentTarget.style.color = 'var(--accent)';
+                e.currentTarget.style.borderColor = 'rgba(79,142,247,0.3)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.borderColor = 'var(--border)';
+              }}
+              title="View History"
             >
-              <History size={12} />
+              <History size={13} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(resource.id); }}
               style={{
-                padding: '6px 12px',
+                padding: '8px 12px',
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-sm)',
                 color: 'var(--text-muted)',
                 cursor: 'pointer',
-                fontSize: 11
+                fontSize: 12,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(248,113,113,0.1)';
+                e.currentTarget.style.color = '#f87171';
+                e.currentTarget.style.borderColor = 'rgba(248,113,113,0.3)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.borderColor = 'var(--border)';
               }}
             >
-              <Trash2 size={12} />
+              <Trash2 size={13} />
             </button>
           </div>
         ) : (
           <button 
+            onClick={(e) => { e.stopPropagation(); onViewDetails(resource); }}
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              padding: '8px',
+              padding: '10px',
               background: resource.status === 'ACTIVE' 
                 ? 'linear-gradient(135deg, var(--accent), var(--accent-2))'
                 : 'rgba(255,255,255,0.05)',
@@ -375,16 +437,51 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
               borderRadius: 'var(--radius-sm)',
               color: resource.status === 'ACTIVE' ? 'white' : 'var(--text-muted)',
               cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
-              fontSize: 12,
-              fontWeight: 500
+              fontSize: 13,
+              fontWeight: 500,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => {
+              if (resource.status === 'ACTIVE') {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(79,142,247,0.3)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (resource.status === 'ACTIVE') {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }
             }}
             disabled={resource.status !== 'ACTIVE'}
           >
-            <Calendar size={12} /> 
+            <Calendar size={14} /> 
             {resource.status === 'ACTIVE' ? 'Book Now' : 'Currently Unavailable'}
           </button>
         )}
       </div>
+
+      {/* Quick View Tooltip on Hover (Optional) */}
+      {isHovered && isAdmin && (
+        <div style={{
+          position: 'absolute',
+          bottom: '100%',
+          left: 16,
+          marginBottom: 8,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '6px 12px',
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          whiteSpace: 'nowrap',
+          zIndex: 20,
+          boxShadow: 'var(--shadow)'
+        }}>
+          <Eye size={10} style={{ display: 'inline', marginRight: 4 }} />
+          Click for details
+        </div>
+      )}
     </div>
   );
 };

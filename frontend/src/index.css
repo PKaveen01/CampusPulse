@@ -111,3 +111,8 @@ select:focus {
         opacity: 1;
     }
 }
+:root {
+  --shadow-glow: 0 0 30px rgba(79, 142, 247, 0.2);
+  --radius-sm: 6px;
+  --radius: 12px;
+}
