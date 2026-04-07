@@ -97,3 +97,17 @@ select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(79,142,247,0.2);
 }
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
