@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Filter, X, ChevronDown, ChevronUp, Wifi, Wind, Tv, Plug, Smartphone } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, Filter, X, ChevronDown, ChevronUp, Wifi, Wind, Tv, Plug, Smartphone, MapPin, Building2, SlidersHorizontal, RotateCcw } from 'lucide-react';
 
 const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -28,8 +28,17 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
         { id: 'hasPowerOutlets', name: 'Power Outlets', icon: <Plug size={14} />, category: 'Utility' }
     ];
 
-    const updateActiveCount = (newFilters) => {
+    const quickFilterPresets = [
+        { label: 'Active Only', action: () => handleQuickFilter({ status: 'ACTIVE' }) },
+        { label: 'Large Venues', action: () => handleQuickFilter({ minCapacity: '100' }) },
+        { label: 'Meeting Rooms', action: () => handleQuickFilter({ type: 'Meeting Room' }) },
+        { label: 'WiFi Enabled', action: () => handleQuickFilter({ amenities: ['hasWifi'] }) },
+        { label: 'Projector Ready', action: () => handleQuickFilter({ amenities: ['hasProjector'] }) }
+    ];
+
+    const updateActiveCount = (newFilters, currentSearchTerm = searchTerm) => {
         let count = 0;
+        if (currentSearchTerm && currentSearchTerm.trim()) count++;
         if (newFilters.type) count++;
         if (newFilters.minCapacity) count++;
         if (newFilters.maxCapacity) count++;
@@ -53,6 +62,17 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
         const newFilters = { ...filters, [key]: value };
         setFilters(newFilters);
         updateActiveCount(newFilters);
+    };
+
+    const handleQuickFilter = (quickValues) => {
+        const mergedFilters = {
+            ...filters,
+            ...quickValues,
+            amenities: quickValues.amenities !== undefined ? quickValues.amenities : filters.amenities
+        };
+        setFilters(mergedFilters);
+        setShowFilters(true);
+        updateActiveCount(mergedFilters);
     };
 
     const handleSearch = () => {
@@ -87,7 +107,31 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
             amenities: []
         });
         setActiveFiltersCount(0);
+        setShowAdvanced(false);
         onClear();
+    };
+
+    const handleRemoveSingleFilter = (key, amenityId = null) => {
+        if (key === 'searchTerm') {
+            setSearchTerm('');
+            updateActiveCount(filters, '');
+            return;
+        }
+
+        if (key === 'amenities' && amenityId) {
+            const newAmenities = filters.amenities.filter(item => item !== amenityId);
+            const newFilters = { ...filters, amenities: newAmenities };
+            setFilters(newFilters);
+            updateActiveCount(newFilters);
+            return;
+        }
+
+        const newFilters = { ...filters, [key]: '' };
+        if (key === 'amenities') {
+            newFilters.amenities = [];
+        }
+        setFilters(newFilters);
+        updateActiveCount(newFilters);
     };
 
     // Group amenities by category
@@ -96,6 +140,46 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
         acc[amenity.category].push(amenity);
         return acc;
     }, {});
+
+    const activeFilterTags = useMemo(() => {
+        const tags = [];
+
+        if (searchTerm) {
+            tags.push({ key: 'searchTerm', label: `Search: ${searchTerm}` });
+        }
+        if (filters.type) {
+            tags.push({ key: 'type', label: `Type: ${filters.type}` });
+        }
+        if (filters.minCapacity) {
+            tags.push({ key: 'minCapacity', label: `Min Capacity: ${filters.minCapacity}` });
+        }
+        if (filters.maxCapacity) {
+            tags.push({ key: 'maxCapacity', label: `Max Capacity: ${filters.maxCapacity}` });
+        }
+        if (filters.location) {
+            tags.push({ key: 'location', label: `Location: ${filters.location}` });
+        }
+        if (filters.building) {
+            tags.push({ key: 'building', label: `Building: ${filters.building}` });
+        }
+        if (filters.status) {
+            tags.push({ key: 'status', label: `Status: ${filters.status.replace('_', ' ')}` });
+        }
+        if (filters.amenities.length > 0) {
+            filters.amenities.forEach(amenityId => {
+                const amenity = availableAmenities.find(item => item.id === amenityId);
+                if (amenity) {
+                    tags.push({
+                        key: 'amenities',
+                        amenityId,
+                        label: amenity.name
+                    });
+                }
+            });
+        }
+
+        return tags;
+    }, [searchTerm, filters]);
 
     return (
         <div style={{
@@ -106,6 +190,51 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
             marginBottom: 24,
             animation: 'fadeIn 0.4s ease'
         }}>
+            {/* Header Summary */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 16,
+                flexWrap: 'wrap'
+            }}>
+                <div>
+                    <h3 style={{
+                        margin: 0,
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                    }}>
+                        <SlidersHorizontal size={16} />
+                        Search & Filter Resources
+                    </h3>
+                    <p style={{
+                        margin: '4px 0 0 0',
+                        fontSize: 12,
+                        color: 'var(--text-secondary)'
+                    }}>
+                        Find facilities by type, capacity, building, location, status, and amenities
+                    </p>
+                </div>
+
+                {activeFiltersCount > 0 && (
+                    <div style={{
+                        padding: '6px 10px',
+                        borderRadius: 20,
+                        background: 'rgba(79,142,247,0.12)',
+                        color: 'var(--accent)',
+                        fontSize: 12,
+                        fontWeight: 600
+                    }}>
+                        {activeFiltersCount} active filter{activeFiltersCount > 1 ? 's' : ''}
+                    </div>
+                )}
+            </div>
+
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, position: 'relative', minWidth: 200 }}>
                     <Search size={18} style={{
@@ -118,7 +247,10 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                     <input
                         type="text"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            updateActiveCount(filters, e.target.value);
+                        }}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         placeholder="Search by name, description, or tags..."
                         style={{
@@ -187,6 +319,91 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                     Search
                 </button>
             </div>
+
+            {/* Quick Filters */}
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+                marginTop: 14
+            }}>
+                {quickFilterPresets.map((preset, index) => (
+                    <button
+                        key={index}
+                        type="button"
+                        onClick={preset.action}
+                        style={{
+                            padding: '6px 12px',
+                            borderRadius: 20,
+                            border: '1px solid var(--border)',
+                            background: 'rgba(255,255,255,0.04)',
+                            color: 'var(--text-secondary)',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = 'var(--accent)';
+                            e.currentTarget.style.color = 'var(--accent)';
+                            e.currentTarget.style.background = 'rgba(79,142,247,0.08)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                        }}
+                    >
+                        {preset.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Active Filter Tags */}
+            {activeFilterTags.length > 0 && (
+                <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    marginTop: 14,
+                    paddingTop: 14,
+                    borderTop: '1px dashed var(--border)'
+                }}>
+                    {activeFilterTags.map((tag, index) => (
+                        <span
+                            key={`${tag.key}-${tag.amenityId || index}`}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                padding: '5px 10px',
+                                borderRadius: 16,
+                                background: 'rgba(79,142,247,0.1)',
+                                color: 'var(--accent)',
+                                fontSize: 12,
+                                fontWeight: 500
+                            }}
+                        >
+                            {tag.label}
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveSingleFilter(tag.key, tag.amenityId)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--accent)',
+                                    cursor: 'pointer',
+                                    padding: 0
+                                }}
+                            >
+                                <X size={12} />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
             
             {showFilters && (
                 <div style={{
@@ -194,6 +411,19 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                     paddingTop: 20,
                     borderTop: '1px solid var(--border)'
                 }}>
+                    {/* Filter Description */}
+                    <div style={{
+                        marginBottom: 16,
+                        padding: '10px 12px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px dashed var(--border)',
+                        borderRadius: 'var(--radius-sm)',
+                        color: 'var(--text-secondary)',
+                        fontSize: 12
+                    }}>
+                        Use these filters to narrow down the facilities catalogue with more realistic operational criteria.
+                    </div>
+
                     {/* Basic Filters */}
                     <div style={{
                         display: 'grid',
@@ -225,6 +455,7 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                                 ))}
                             </select>
                         </div>
+
                         <div>
                             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
                                 Capacity Range
@@ -235,6 +466,7 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                                     value={filters.minCapacity}
                                     onChange={(e) => handleFilterChange('minCapacity', e.target.value)}
                                     placeholder="Min"
+                                    min="0"
                                     style={{
                                         width: '50%',
                                         padding: '8px 12px',
@@ -250,6 +482,7 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                                     value={filters.maxCapacity}
                                     onChange={(e) => handleFilterChange('maxCapacity', e.target.value)}
                                     placeholder="Max"
+                                    min="0"
                                     style={{
                                         width: '50%',
                                         padding: '8px 12px',
@@ -261,27 +494,43 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                                     }}
                                 />
                             </div>
+                            {(filters.minCapacity || filters.maxCapacity) && (
+                                <p style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+                                    Filtering by seating or usage capacity
+                                </p>
+                            )}
                         </div>
+
                         <div>
                             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
                                 Building
                             </label>
-                            <input
-                                type="text"
-                                value={filters.building}
-                                onChange={(e) => handleFilterChange('building', e.target.value)}
-                                placeholder="Building name"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid var(--border)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    color: 'var(--text-primary)',
-                                    outline: 'none'
-                                }}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <Building2 size={14} style={{
+                                    position: 'absolute',
+                                    left: 10,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: 'var(--text-muted)'
+                                }} />
+                                <input
+                                    type="text"
+                                    value={filters.building}
+                                    onChange={(e) => handleFilterChange('building', e.target.value)}
+                                    placeholder="Building name"
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px 8px 32px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        color: 'var(--text-primary)',
+                                        outline: 'none'
+                                    }}
+                                />
+                            </div>
                         </div>
+
                         <div>
                             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
                                 Status
@@ -307,6 +556,61 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+                    </div>
+
+                    {/* NEW: Location field added using existing filter state */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: 16,
+                        marginBottom: 16
+                    }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
+                                Location Details
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <MapPin size={14} style={{
+                                    position: 'absolute',
+                                    left: 10,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: 'var(--text-muted)'
+                                }} />
+                                <input
+                                    type="text"
+                                    value={filters.location}
+                                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                                    placeholder="Room number, wing, area..."
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px 8px 32px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        color: 'var(--text-primary)',
+                                        outline: 'none'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-end'
+                        }}>
+                            <div style={{
+                                width: '100%',
+                                padding: '10px 12px',
+                                background: 'rgba(79,142,247,0.06)',
+                                border: '1px solid rgba(79,142,247,0.12)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-secondary)',
+                                fontSize: 12
+                            }}>
+                                Tip: combine building + location + amenities for more accurate results.
+                            </div>
                         </div>
                     </div>
 
@@ -371,23 +675,56 @@ const ResourceSearch = ({ onSearch, onClear, resourceTypes = [] }) => {
                     )}
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                        <button
-                            onClick={handleClear}
-                            style={{
-                                padding: '6px 16px',
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'var(--text-muted)',
-                                cursor: 'pointer',
-                                fontSize: 12,
-                                transition: 'color 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.color = 'var(--danger)'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                        >
-                            Clear All
-                        </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingTop: 8, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                            Use filters to narrow down operationally suitable resources.
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                onClick={handleClear}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    padding: '6px 16px',
+                                    background: 'transparent',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.color = 'var(--danger)';
+                                    e.currentTarget.style.borderColor = 'var(--danger)';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.color = 'var(--text-muted)';
+                                    e.currentTarget.style.borderColor = 'var(--border)';
+                                }}
+                            >
+                                <RotateCcw size={13} />
+                                Clear All
+                            </button>
+
+                            <button
+                                onClick={handleSearch}
+                                style={{
+                                    padding: '6px 16px',
+                                    background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                                    border: 'none',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    fontWeight: 600
+                                }}
+                            >
+                                Apply Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
