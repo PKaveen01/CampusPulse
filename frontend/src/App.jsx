@@ -17,7 +17,8 @@ import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
 
 // ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
 import ResourceList from './pages/Resources/ResourceList'
-import ResourceAnalytics from './components/resources/ResourceAnalytics'  // ← ADD THIS
+import ResourceAnalytics from './components/resources/ResourceAnalytics'
+import ResourceDetails from './pages/Resources/ResourceDetails'
 
 // Stub pages (other members)
 import {
@@ -82,18 +83,26 @@ export default function App() {
               </ProtectedRoute>
             } />
 
-            {/* ========== MODULE PAGES ========== */}
-            {/* Member 1 - Facilities & Assets Catalogue Module */}
-            <Route path="/resources" element={
-              <ProtectedRoute>
-                <ResourceList />
+            {/* ========== MODULE PAGES - ORDER MATTERS! ========== */}
+            
+            {/* Member 1 - Resource Analytics (most specific - MUST BE FIRST) */}
+            <Route path="/resources/analytics" element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+                <ResourceAnalytics onClose={() => {}} />
               </ProtectedRoute>
             } />
             
-            {/* Member 1 - Resource Analytics - MUST COME BEFORE /resources */}
-            <Route path="/resources/analytics" element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
-                <ResourceAnalytics />
+            {/* Member 1 - Resource Details by ID (specific - must come before /resources) */}
+            <Route path="/resources/:id" element={
+              <ProtectedRoute>
+                <ResourceDetails />
+              </ProtectedRoute>
+            } />
+            
+            {/* Member 1 - Resources List (general - must be LAST) */}
+            <Route path="/resources" element={
+              <ProtectedRoute>
+                <ResourceList />
               </ProtectedRoute>
             } />
             
