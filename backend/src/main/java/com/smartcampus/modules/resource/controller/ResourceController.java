@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -149,36 +151,49 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.getResourceTypeStatistics());
     }
 
-    // ==================== NEW ANALYTICS ENDPOINTS ====================
+    // ==================== ANALYTICS ENDPOINTS ====================
 
-    /**
-     * Get complete resource analytics dashboard data
-     * Returns: total resources, active count, utilization rate, resources by type, by building, by capacity, amenities count
-     */
     @GetMapping("/analytics/dashboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, Object>> getResourceAnalytics() {
         return ResponseEntity.ok(resourceService.getResourceAnalytics());
     }
 
-    /**
-     * Get resources that need maintenance
-     * Returns list of resources with MAINTENANCE status
-     */
     @GetMapping("/analytics/maintenance-needed")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<List<ResourceDTO>> getResourcesNeedingMaintenance() {
         return ResponseEntity.ok(resourceService.getResourcesNeedingMaintenance());
     }
 
-    /**
-     * Get utilization percentage by resource type
-     * Returns map of resource type to utilization percentage
-     */
     @GetMapping("/analytics/utilization-by-type")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, Double>> getUtilizationByType() {
         return ResponseEntity.ok(resourceService.getUtilizationByType());
+    }
+
+    @GetMapping("/analytics/trend")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<Map<String, Object>>> getResourceTrend(
+            @RequestParam(defaultValue = "week") String range) {
+        return ResponseEntity.ok(resourceService.getResourceTrend(range));
+    }
+
+    @GetMapping("/analytics/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<byte[]> exportAnalytics(
+            @RequestParam(defaultValue = "week") String range,
+            @RequestParam(defaultValue = "csv") String format) {
+
+        String csvData = resourceService.exportAnalyticsToCsv(range);
+        byte[] bytes = csvData.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentDispositionFormData("attachment",
+                String.format("resource_analytics_%s_%s.csv", range, java.time.LocalDate.now()));
+        headers.setContentLength(bytes.length);
+
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
     // ==================== Reference Data ====================
@@ -191,7 +206,6 @@ public class ResourceController {
 
     @GetMapping("/available/now")
     public ResponseEntity<List<ResourceDTO>> getAvailableResourcesNow() {
-        // This would need additional logic to check current availability
         return ResponseEntity.ok(resourceService.getResourcesByStatus("ACTIVE"));
     }
 }

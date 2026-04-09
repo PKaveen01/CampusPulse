@@ -61,6 +61,34 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
   // Calculate popularity score (mock - can be replaced with real data)
   const popularityScore = resource.totalBookings ? Math.min(Math.floor(resource.totalBookings / 10), 5) : 0;
 
+  // NEW: derived display helpers
+  const amenityCount = amenities.length;
+  const hasDescription = resource.description && resource.description.trim().length > 0;
+  const shortDescription = hasDescription
+    ? resource.description.length > 110
+      ? `${resource.description.substring(0, 110)}...`
+      : resource.description
+    : '';
+
+  const resourceLabel = resource.resourceType || 'Resource';
+  const capacityValue = Number(resource.capacity || 0);
+
+  const capacityTier =
+    capacityValue <= 10
+      ? { label: 'Intimate', bg: 'rgba(52,211,153,0.15)', color: '#34d399' }
+      : capacityValue > 50
+      ? { label: 'Large', bg: 'rgba(79,142,247,0.15)', color: '#4f8ef7' }
+      : { label: 'Standard', bg: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)' };
+
+  const utilizationBadge =
+    resource.totalBookings > 80
+      ? { label: 'High Demand', bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' }
+      : resource.totalBookings > 30
+      ? { label: 'Frequently Used', bg: 'rgba(79,142,247,0.15)', color: '#4f8ef7' }
+      : null;
+
+  const fallbackInitial = resource.name ? resource.name.charAt(0).toUpperCase() : 'R';
+
   return (
     <div 
       style={{
@@ -77,6 +105,15 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onViewDetails(resource)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onViewDetails(resource);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${resource.name}`}
     >
       {/* Popularity Badge */}
       {popularityScore >= 3 && resource.status === 'ACTIVE' && (
@@ -146,7 +183,31 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             onError={() => setImageError(true)}
           />
         ) : (
-          <Building2 size={56} style={{ color: 'white', opacity: 0.4 }} />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}>
+            <Building2 size={56} style={{ opacity: 0.35, marginBottom: 6 }} />
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+              fontWeight: 700,
+              backdropFilter: 'blur(4px)'
+            }}>
+              {fallbackInitial}
+            </div>
+          </div>
         )}
         
         {/* Overlay Gradient */}
@@ -185,22 +246,57 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             {style.icon}
             {style.label}
           </span>
+
+          {/* NEW: secondary operational badge */}
+          {utilizationBadge && (
+            <span style={{
+              padding: '4px 10px',
+              borderRadius: 20,
+              fontSize: 10,
+              fontWeight: 600,
+              background: utilizationBadge.bg,
+              color: utilizationBadge.color,
+              backdropFilter: 'blur(8px)'
+            }}>
+              {utilizationBadge.label}
+            </span>
+          )}
         </div>
       </div>
       
       {/* Content */}
       <div style={{ padding: 18 }}>
         {/* Title Row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-          <h3 style={{ 
-            fontSize: 16, 
-            fontWeight: 600, 
-            color: 'var(--text-primary)',
-            flex: 1,
-            lineHeight: 1.4
-          }}>
-            {resource.name}
-          </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ 
+              fontSize: 16, 
+              fontWeight: 600, 
+              color: 'var(--text-primary)',
+              lineHeight: 1.4,
+              marginBottom: 4
+            }}>
+              {resource.name}
+            </h3>
+
+            {/* NEW: status description line */}
+            <div style={{
+              fontSize: 11,
+              color: style.color,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: style.color,
+                display: 'inline-block'
+              }} />
+              {style.description}
+            </div>
+          </div>
           
           {/* Booking Count Badge */}
           {resource.totalBookings > 0 && (
@@ -223,7 +319,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
         
         {/* Details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13, flexWrap: 'wrap' }}>
             <Users size={14} />
             <span>Capacity: {resource.capacity} people</span>
             {resource.capacity <= 10 && (
@@ -250,12 +346,42 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
                 Large
               </span>
             )}
+
+            {/* NEW: standard tier badge */}
+            {resource.capacity > 10 && resource.capacity <= 50 && (
+              <span style={{
+                fontSize: 9,
+                background: capacityTier.bg,
+                color: capacityTier.color,
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontWeight: 500
+              }}>
+                {capacityTier.label}
+              </span>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13 }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13, flexWrap: 'wrap' }}>
             <MapPin size={14} />
             <span>{resource.building ? `${resource.building}, ` : ''}{resource.location}</span>
+
+            {/* NEW: floor badge if available */}
+            {resource.floor && (
+              <span style={{
+                fontSize: 9,
+                background: 'rgba(255,255,255,0.08)',
+                color: 'var(--text-secondary)',
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontWeight: 500
+              }}>
+                {resource.floor}
+              </span>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 12, flexWrap: 'wrap' }}>
             <span style={{ 
               padding: '2px 8px', 
               background: 'rgba(79,142,247,0.1)', 
@@ -265,8 +391,38 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             }}>
               {resource.resourceType}
             </span>
+
+            {/* NEW: amenity count pill */}
+            {amenityCount > 0 && (
+              <span style={{ 
+                padding: '2px 8px', 
+                background: 'rgba(52,211,153,0.1)', 
+                borderRadius: 12,
+                fontSize: 10,
+                fontWeight: 500,
+                color: '#34d399'
+              }}>
+                {amenityCount} amenit{amenityCount > 1 ? 'ies' : 'y'}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* NEW: description preview */}
+        {hasDescription && (
+          <div style={{
+            marginBottom: 16,
+            padding: '10px 12px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px dashed var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+            lineHeight: 1.5
+          }}>
+            {shortDescription}
+          </div>
+        )}
 
         {/* Amenities Section - Simplified & Clean */}
         {amenities.length > 0 && (
@@ -304,6 +460,34 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           </div>
         )}
         
+        {/* NEW: resource insights row */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 14
+        }}>
+          <span style={{
+            padding: '4px 8px',
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: 10,
+            fontSize: 10,
+            color: 'var(--text-muted)'
+          }}>
+            Category: {resourceLabel}
+          </span>
+
+          <span style={{
+            padding: '4px 8px',
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: 10,
+            fontSize: 10,
+            color: 'var(--text-muted)'
+          }}>
+            {resource.totalBookings > 0 ? 'In active circulation' : 'Low recent usage'}
+          </span>
+        </div>
+
         {/* Action Buttons */}
         {isAdmin ? (
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -369,7 +553,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
               {resource.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onViewHistory(resource); }}
+              onClick={(e) => { e.stopPropagation(); onViewHistory && onViewHistory(resource); }}
               style={{
                 padding: '8px 12px',
                 background: 'rgba(255,255,255,0.05)',

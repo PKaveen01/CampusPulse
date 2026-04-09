@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,4 +40,24 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
 
     // Find by capacity range
     List<Resource> findByCapacityBetween(Integer minCapacity, Integer maxCapacity);
+
+    // ========== NEW ANALYTICS QUERIES ==========
+
+    @Query("SELECT r FROM Resource r WHERE r.createdAt BETWEEN :startDate AND :endDate")
+    List<Resource> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT r.resourceType, COUNT(r) FROM Resource r WHERE r.resourceType IS NOT NULL GROUP BY r.resourceType")
+    List<Object[]> countResourcesByType();
+
+    @Query("SELECT r.building, COUNT(r) FROM Resource r WHERE r.building IS NOT NULL AND r.building != '' GROUP BY r.building")
+    List<Object[]> countResourcesByBuilding();
+
+    @Query("SELECT COUNT(r) FROM Resource r WHERE r.status = 'MAINTENANCE'")
+    long countMaintenanceResources();
+
+    @Query("SELECT COUNT(r) FROM Resource r WHERE r.status = 'OUT_OF_SERVICE'")
+    long countOutOfServiceResources();
+
+    @Query("SELECT DATE(r.createdAt), COUNT(r) FROM Resource r WHERE r.createdAt BETWEEN :startDate AND :endDate GROUP BY DATE(r.createdAt)")
+    List<Object[]> countResourcesByDate(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

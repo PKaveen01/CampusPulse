@@ -17,7 +17,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -294,7 +297,7 @@ public class ResourceServiceImpl implements ResourceService {
         return statistics;
     }
 
-    // ==================== NEW ANALYTICS METHODS ====================
+    // ==================== ANALYTICS METHODS ====================
 
     @Override
     public Map<String, Object> getResourceAnalytics() {
@@ -377,8 +380,6 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<Resource> allResources = resourceRepository.findAll();
 
-        // For now, resources in MAINTENANCE status need attention
-        // You can enhance this with booking count logic later
         return allResources.stream()
                 .filter(r -> "MAINTENANCE".equals(r.getStatus()))
                 .map(this::convertToDTO)
@@ -410,6 +411,121 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         return utilizationByType;
+    }
+
+    @Override
+    public List<Map<String, Object>> getResourceTrend(String range) {
+        log.info("Fetching resource trend for range: {}", range);
+
+        List<Map<String, Object>> trendData = new ArrayList<>();
+
+        try {
+            LocalDateTime endDate = LocalDateTime.now();
+            LocalDateTime startDate;
+            int daysToSubtract;
+
+            switch (range.toLowerCase()) {
+                case "month":
+                    daysToSubtract = 30;
+                    break;
+                case "year":
+                    daysToSubtract = 365;
+                    break;
+                default: // week
+                    daysToSubtract = 7;
+            }
+
+            startDate = endDate.minusDays(daysToSubtract);
+
+            // Get resources created in date range
+            List<Resource> resources = resourceRepository.findByCreatedAtBetween(startDate, endDate);
+
+            // Group by date
+            Map<String, Long> grouped = resources.stream()
+                    .collect(Collectors.groupingBy(
+                            r -> r.getCreatedAt().toLocalDate().toString(),
+                            Collectors.counting()
+                    ));
+
+            // Generate all dates in range
+            LocalDate current = startDate.toLocalDate();
+            LocalDate end = endDate.toLocalDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE");
+
+            while (!current.isAfter(end)) {
+                Map<String, Object> dayData = new LinkedHashMap<>();
+                dayData.put("label", current.format(formatter));
+                dayData.put("date", current.toString());
+                dayData.put("count", grouped.getOrDefault(current.toString(), 0L));
+                trendData.add(dayData);
+                current = current.plusDays(1);
+            }
+
+        } catch (Exception e) {
+            log.error("Error fetching trend data: ", e);
+        }
+
+        return trendData;
+    }
+
+    @Override
+    public String exportAnalyticsToCsv(String range) {
+        log.info("Exporting analytics to CSV for range: {}", range);
+
+        StringBuilder csv = new StringBuilder();
+
+        try {
+            // Headers
+            csv.append("Date,Resource Name,Type,Status,Capacity,Location,Building,Floor,Created At\n");
+
+            // Get data based on range
+            LocalDateTime endDate = LocalDateTime.now();
+            LocalDateTime startDate;
+            int daysToSubtract;
+
+            switch (range.toLowerCase()) {
+                case "month":
+                    daysToSubtract = 30;
+                    break;
+                case "year":
+                    daysToSubtract = 365;
+                    break;
+                default:
+                    daysToSubtract = 7;
+            }
+
+            startDate = endDate.minusDays(daysToSubtract);
+
+            List<Resource> resources = resourceRepository.findByCreatedAtBetween(startDate, endDate);
+
+            for (Resource r : resources) {
+                csv.append(String.format("%s,%s,%s,%s,%d,%s,%s,%s,%s\n",
+                        r.getCreatedAt().toLocalDate(),
+                        escapeCsv(r.getName()),
+                        r.getResourceType() != null ? r.getResourceType() : "",
+                        r.getStatus(),
+                        r.getCapacity(),
+                        escapeCsv(r.getLocation()),
+                        r.getBuilding() != null ? r.getBuilding() : "",
+                        r.getFloor() != null ? r.getFloor() : "",
+                        r.getCreatedAt() != null ? r.getCreatedAt().toString() : ""
+                ));
+            }
+
+        } catch (Exception e) {
+            log.error("Error exporting analytics: ", e);
+            csv.append("Error generating report");
+        }
+
+        return csv.toString();
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     // ==================== Private Helper Methods ====================

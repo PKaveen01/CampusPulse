@@ -44,7 +44,7 @@ public interface ResourceService {
     long getActiveResourcesCount();
     Map<String, Long> getResourceTypeStatistics();
 
-    // ========== NEW ANALYTICS METHODS ==========
+    // ========== ANALYTICS METHODS ==========
 
     /**
      * Get complete analytics dashboard data
@@ -63,4 +63,18 @@ public interface ResourceService {
      * @return Map of resource type to utilization percentage
      */
     Map<String, Double> getUtilizationByType();
+
+    /**
+     * Get resource trend data for chart
+     * @param range week, month, or year
+     * @return List of trend data points with label and count
+     */
+    List<Map<String, Object>> getResourceTrend(String range);
+
+    /**
+     * Export analytics data as CSV
+     * @param range week, month, or year
+     * @return CSV content as string
+     */
+    String exportAnalyticsToCsv(String range);
 }
