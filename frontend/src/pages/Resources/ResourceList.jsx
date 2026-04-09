@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, RefreshCw, BarChart3, Download, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, RefreshCw, BarChart3, Download, Filter, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import ResourceCard from '../../components/resources/ResourceCard';
 import ResourceSearch from '../../components/resources/ResourceSearch';
 import ResourceForm from './ResourceForm';
+import CampusMap from '../../components/resources/CampusMap';
 import resourceService from '../../services/resourceService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -61,6 +62,7 @@ const ResourceList = () => {
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [showCampusMap, setShowCampusMap] = useState(false);
     const [editingResource, setEditingResource] = useState(null);
     const [resourceTypes, setResourceTypes] = useState([]);
     const [toast, setToast] = useState(null);
@@ -189,12 +191,15 @@ const ResourceList = () => {
     };
 
     const handleViewDetails = (resource) => {
-        // Navigate to details page or open modal
         navigate(`/resources/${resource.id}`);
     };
 
     const handleAnalytics = () => {
         navigate('/resources/analytics');
+    };
+
+    const handleOpenCampusMap = () => {
+        setShowCampusMap(true);
     };
 
     const exportToCSV = () => {
@@ -254,6 +259,35 @@ const ResourceList = () => {
                     </div>
                     
                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        {/* Campus Map Button */}
+                        <button
+                            onClick={handleOpenCampusMap}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                padding: '10px 18px',
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                fontWeight: 500,
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.color = 'var(--accent)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <MapPin size={16} /> Campus Map
+                        </button>
+
                         {/* Export Button */}
                         {resources.length > 0 && (
                             <button
@@ -433,7 +467,7 @@ const ResourceList = () => {
                 </div>
             )}
 
-            {/* Empty State - Professional Design */}
+            {/* Empty State */}
             {!loading && resources.length === 0 && (
                 <div style={{ 
                     textAlign: 'center', 
@@ -495,7 +529,7 @@ const ResourceList = () => {
                 </div>
             )}
 
-            {/* Pagination - Enhanced */}
+            {/* Pagination */}
             {!loading && pagination.totalPages > 1 && (
                 <div style={{ 
                     display: 'flex', 
@@ -632,6 +666,17 @@ const ResourceList = () => {
                 />
             )}
 
+            {/* Campus Map Modal */}
+            {showCampusMap && (
+                <CampusMap
+                    onResourceClick={(resource) => {
+                        setShowCampusMap(false);
+                        handleViewDetails(resource);
+                    }}
+                    onClose={() => setShowCampusMap(false)}
+                />
+            )}
+
             {/* Toast Notifications */}
             {toast && (
                 <Toast
@@ -641,7 +686,7 @@ const ResourceList = () => {
                 />
             )}
 
-            {/* Add keyframe animations to document */}
+            {/* Add keyframe animations */}
             <style>{`
                 @keyframes slideInRight {
                     from {
