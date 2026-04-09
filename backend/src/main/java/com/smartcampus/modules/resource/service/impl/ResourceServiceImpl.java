@@ -37,12 +37,10 @@ public class ResourceServiceImpl implements ResourceService {
     public ResourceDTO createResource(ResourceDTO resourceDTO) {
         log.info("Creating new resource: {}", resourceDTO.getName());
 
-        // Validate
         if (!validateResource(resourceDTO)) {
             throw new IllegalArgumentException("Invalid resource data");
         }
 
-        // Convert DTO to Entity - Direct mapping
         Resource resource = Resource.builder()
                 .name(resourceDTO.getName())
                 .resourceType(resourceDTO.getResourceType())
@@ -73,7 +71,6 @@ public class ResourceServiceImpl implements ResourceService {
         Resource existingResource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found with ID: " + id));
 
-        // Update fields
         existingResource.setName(resourceDTO.getName());
         existingResource.setResourceType(resourceDTO.getResourceType());
         existingResource.setCapacity(resourceDTO.getCapacity());
@@ -88,7 +85,6 @@ public class ResourceServiceImpl implements ResourceService {
         existingResource.setHasWifi(resourceDTO.getHasWifi());
         existingResource.setHasPowerOutlets(resourceDTO.getHasPowerOutlets());
 
-        // Only update status if provided
         if (resourceDTO.getStatus() != null) {
             existingResource.setStatus(resourceDTO.getStatus());
         }
@@ -256,6 +252,59 @@ public class ResourceServiceImpl implements ResourceService {
                 resourceId, dayOfWeek, startTime, endTime);
     }
 
+    // ==================== NEW: AVAILABLE TIME SLOTS METHOD ====================
+
+    @Override
+    public Map<String, Object> getAvailableTimeSlots(Long resourceId, LocalDate date) {
+        log.info("Getting available time slots for resource: {} on date: {}", resourceId, date);
+
+        Map<String, Object> response = new HashMap<>();
+        List<Map<String, String>> availableSlots = new ArrayList<>();
+
+        try {
+            int dayOfWeek = date.getDayOfWeek().getValue() - 1;
+
+            List<AvailabilityWindow> windows = availabilityWindowRepository
+                    .findByResourceIdAndDayOfWeek(resourceId, dayOfWeek);
+
+            if (windows.isEmpty()) {
+                response.put("date", date.toString());
+                response.put("availableSlots", availableSlots);
+                response.put("hasAvailability", false);
+                return response;
+            }
+
+            for (AvailabilityWindow window : windows) {
+                LocalTime current = window.getStartTime();
+                LocalTime windowEnd = window.getEndTime();
+
+                while (current.isBefore(windowEnd)) {
+                    LocalTime slotEnd = current.plusMinutes(30);
+
+                    if (!slotEnd.isAfter(windowEnd)) {
+                        Map<String, String> slot = new HashMap<>();
+                        slot.put("start", current.toString());
+                        slot.put("end", slotEnd.toString());
+                        availableSlots.add(slot);
+                    }
+
+                    current = slotEnd;
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error getting available time slots: ", e);
+        }
+
+        response.put("date", date.toString());
+        response.put("availableSlots", availableSlots);
+        response.put("hasAvailability", !availableSlots.isEmpty());
+
+        return response;
+    }
+
+    // ==================== VALIDATION ====================
+
     @Override
     public boolean validateResource(ResourceDTO resourceDTO) {
         if (resourceDTO.getName() == null || resourceDTO.getName().trim().isEmpty()) {
@@ -276,6 +325,8 @@ public class ResourceServiceImpl implements ResourceService {
         }
         return true;
     }
+
+    // ==================== STATISTICS ====================
 
     @Override
     public long getActiveResourcesCount() {
@@ -306,11 +357,9 @@ public class ResourceServiceImpl implements ResourceService {
         Map<String, Object> analytics = new LinkedHashMap<>();
         List<Resource> allResources = resourceRepository.findAll();
 
-        // Total resources
         long totalResources = allResources.size();
         analytics.put("totalResources", totalResources);
 
-        // Active vs Inactive
         long activeResources = allResources.stream()
                 .filter(r -> "ACTIVE".equals(r.getStatus()))
                 .count();
@@ -325,11 +374,9 @@ public class ResourceServiceImpl implements ResourceService {
         analytics.put("outOfServiceResources", outOfService);
         analytics.put("maintenanceResources", maintenance);
 
-        // Utilization rate (active / total)
         double utilizationRate = totalResources > 0 ? (double) activeResources / totalResources * 100 : 0;
         analytics.put("utilizationRate", Math.round(utilizationRate * 10) / 10.0);
 
-        // Resources by type
         Map<String, Long> resourcesByType = allResources.stream()
                 .filter(r -> r.getResourceType() != null)
                 .collect(Collectors.groupingBy(
@@ -339,7 +386,6 @@ public class ResourceServiceImpl implements ResourceService {
                 ));
         analytics.put("resourcesByType", resourcesByType);
 
-        // Resources by building
         Map<String, Long> resourcesByBuilding = allResources.stream()
                 .filter(r -> r.getBuilding() != null && !r.getBuilding().isEmpty())
                 .collect(Collectors.groupingBy(
@@ -349,14 +395,12 @@ public class ResourceServiceImpl implements ResourceService {
                 ));
         analytics.put("resourcesByBuilding", resourcesByBuilding);
 
-        // Resources by capacity range
         Map<String, Long> resourcesByCapacity = new LinkedHashMap<>();
         resourcesByCapacity.put("Small (1-10)", allResources.stream().filter(r -> r.getCapacity() <= 10).count());
         resourcesByCapacity.put("Medium (11-50)", allResources.stream().filter(r -> r.getCapacity() > 10 && r.getCapacity() <= 50).count());
         resourcesByCapacity.put("Large (51+)", allResources.stream().filter(r -> r.getCapacity() > 50).count());
         analytics.put("resourcesByCapacity", resourcesByCapacity);
 
-        // Amenities count
         long withAC = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getIsAirConditioned())).count();
         long withProjector = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasProjector())).count();
         long withSmartBoard = allResources.stream().filter(r -> Boolean.TRUE.equals(r.getHasSmartBoard())).count();
@@ -377,10 +421,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public List<ResourceDTO> getResourcesNeedingMaintenance() {
         log.info("Fetching resources needing maintenance");
-
-        List<Resource> allResources = resourceRepository.findAll();
-
-        return allResources.stream()
+        return resourceRepository.findAll().stream()
                 .filter(r -> "MAINTENANCE".equals(r.getStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -431,23 +472,20 @@ public class ResourceServiceImpl implements ResourceService {
                 case "year":
                     daysToSubtract = 365;
                     break;
-                default: // week
+                default:
                     daysToSubtract = 7;
             }
 
             startDate = endDate.minusDays(daysToSubtract);
 
-            // Get resources created in date range
             List<Resource> resources = resourceRepository.findByCreatedAtBetween(startDate, endDate);
 
-            // Group by date
             Map<String, Long> grouped = resources.stream()
                     .collect(Collectors.groupingBy(
                             r -> r.getCreatedAt().toLocalDate().toString(),
                             Collectors.counting()
                     ));
 
-            // Generate all dates in range
             LocalDate current = startDate.toLocalDate();
             LocalDate end = endDate.toLocalDate();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE");
@@ -475,10 +513,8 @@ public class ResourceServiceImpl implements ResourceService {
         StringBuilder csv = new StringBuilder();
 
         try {
-            // Headers
             csv.append("Date,Resource Name,Type,Status,Capacity,Location,Building,Floor,Created At\n");
 
-            // Get data based on range
             LocalDateTime endDate = LocalDateTime.now();
             LocalDateTime startDate;
             int daysToSubtract;
@@ -528,7 +564,7 @@ public class ResourceServiceImpl implements ResourceService {
         return value;
     }
 
-    // ==================== Private Helper Methods ====================
+    // ==================== PRIVATE HELPER METHODS ====================
 
     private Specification<Resource> buildSearchSpecification(ResourceSearchDTO searchDTO) {
         return (root, query, criteriaBuilder) -> {
@@ -573,7 +609,6 @@ public class ResourceServiceImpl implements ResourceService {
                 predicates.add(criteriaBuilder.or(namePredicate, descriptionPredicate));
             }
 
-            // Amenities filters
             if (searchDTO.getAirConditioned() != null && searchDTO.getAirConditioned()) {
                 predicates.add(criteriaBuilder.isTrue(root.get("isAirConditioned")));
             }

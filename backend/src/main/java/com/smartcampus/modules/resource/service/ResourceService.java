@@ -6,6 +6,7 @@ import com.smartcampus.modules.resource.dto.AvailabilityWindowDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,15 @@ public interface ResourceService {
     void removeAvailabilityWindow(Long windowId);
     boolean isResourceAvailable(Long resourceId, Integer dayOfWeek,
                                 LocalTime startTime, LocalTime endTime);
+
+    // ========== NEW: Available Time Slots ==========
+    /**
+     * Get available time slots for a resource on a specific date
+     * @param resourceId The resource ID
+     * @param date The booking date
+     * @return Map containing date, available slots list, and availability flag
+     */
+    Map<String, Object> getAvailableTimeSlots(Long resourceId, LocalDate date);
 
     // Validation
     boolean validateResource(ResourceDTO resourceDTO);

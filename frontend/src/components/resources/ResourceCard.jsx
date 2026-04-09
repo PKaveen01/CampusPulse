@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { 
   Building2, Users, MapPin, Edit, Trash2, Power, PowerOff, Calendar, 
   Wind, Tv, Wifi, Plug, Smartphone, Clock, AlertTriangle, CheckCircle, 
-  BookOpen, Wrench, History, BarChart3, Eye, Star, TrendingUp 
+  BookOpen, Wrench, History, BarChart3, Eye, Star, TrendingUp, X 
 } from 'lucide-react';
 
 const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetails, onViewHistory, isAdmin }) => {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Availability state
+  const [selectedDate, setSelectedDate] = useState('');
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [showSlotPicker, setShowSlotPicker] = useState(false);
   
   // Status configurations
   const statusConfig = {
@@ -58,10 +64,9 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
   if (resource.hasWifi) amenities.push({ name: 'WiFi', icon: <Wifi size={12} />, category: 'connectivity' });
   if (resource.hasPowerOutlets) amenities.push({ name: 'Power', icon: <Plug size={12} />, category: 'utility' });
 
-  // Calculate popularity score (mock - can be replaced with real data)
+  // Calculate popularity score
   const popularityScore = resource.totalBookings ? Math.min(Math.floor(resource.totalBookings / 10), 5) : 0;
 
-  // NEW: derived display helpers
   const amenityCount = amenities.length;
   const hasDescription = resource.description && resource.description.trim().length > 0;
   const shortDescription = hasDescription
@@ -89,6 +94,57 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
 
   const fallbackInitial = resource.name ? resource.name.charAt(0).toUpperCase() : 'R';
 
+  // Get next 7 days for date selection
+  const getNextDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      days.push(date);
+    }
+    return days;
+  };
+
+  // Fetch available time slots
+  const fetchTimeSlots = async (date) => {
+    setLoadingSlots(true);
+    try {
+      const response = await fetch(`/api/resources/${resource.id}/available-slots?date=${date}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+      });
+      const data = await response.json();
+      setTimeSlots(data.availableSlots || []);
+    } catch (error) {
+      console.error('Failed to fetch time slots:', error);
+      setTimeSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  const handleDateChange = (e) => {
+    const date = e.target.value;
+    setSelectedDate(date);
+    if (date) {
+      fetchTimeSlots(date);
+    } else {
+      setTimeSlots([]);
+    }
+  };
+
+  const toggleSlotPicker = () => {
+    setShowSlotPicker(!showSlotPicker);
+    if (!showSlotPicker) {
+      setSelectedDate('');
+      setTimeSlots([]);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
   return (
     <div 
       style={{
@@ -104,11 +160,11 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => onViewDetails(resource)}
+      onClick={() => !showSlotPicker && onViewDetails(resource)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onViewDetails(resource);
+          if (!showSlotPicker) onViewDetails(resource);
         }
       }}
       tabIndex={0}
@@ -247,7 +303,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             {style.label}
           </span>
 
-          {/* NEW: secondary operational badge */}
           {utilizationBadge && (
             <span style={{
               padding: '4px 10px',
@@ -279,7 +334,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
               {resource.name}
             </h3>
 
-            {/* NEW: status description line */}
             <div style={{
               fontSize: 11,
               color: style.color,
@@ -298,7 +352,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             </div>
           </div>
           
-          {/* Booking Count Badge */}
           {resource.totalBookings > 0 && (
             <span style={{
               fontSize: 10,
@@ -347,7 +400,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
               </span>
             )}
 
-            {/* NEW: standard tier badge */}
             {resource.capacity > 10 && resource.capacity <= 50 && (
               <span style={{
                 fontSize: 9,
@@ -366,7 +418,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             <MapPin size={14} />
             <span>{resource.building ? `${resource.building}, ` : ''}{resource.location}</span>
 
-            {/* NEW: floor badge if available */}
             {resource.floor && (
               <span style={{
                 fontSize: 9,
@@ -392,7 +443,6 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
               {resource.resourceType}
             </span>
 
-            {/* NEW: amenity count pill */}
             {amenityCount > 0 && (
               <span style={{ 
                 padding: '2px 8px', 
@@ -408,7 +458,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           </div>
         </div>
 
-        {/* NEW: description preview */}
+        {/* Description preview */}
         {hasDescription && (
           <div style={{
             marginBottom: 16,
@@ -424,7 +474,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           </div>
         )}
 
-        {/* Amenities Section - Simplified & Clean */}
+        {/* Amenities Section */}
         {amenities.length > 0 && (
           <div style={{
             marginBottom: 18,
@@ -460,7 +510,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           </div>
         )}
         
-        {/* NEW: resource insights row */}
+        {/* Resource insights row */}
         <div style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -487,6 +537,125 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             {resource.totalBookings > 0 ? 'In active circulation' : 'Low recent usage'}
           </span>
         </div>
+
+        {/* ========== NEW: AVAILABILITY TIME SLOTS SECTION ========== */}
+        {resource.status === 'ACTIVE' && !isAdmin && (
+          <div style={{ marginBottom: 16 }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSlotPicker();
+              }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '10px',
+                background: 'rgba(79,142,247,0.1)',
+                border: '1px solid rgba(79,142,247,0.2)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--accent)',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.2)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(79,142,247,0.1)';
+              }}
+            >
+              <Clock size={14} />
+              {showSlotPicker ? 'Hide Availability' : 'Check Availability'}
+            </button>
+
+            {showSlotPicker && (
+              <div style={{
+                marginTop: 12,
+                padding: '12px',
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
+                    Select Date
+                  </label>
+                  <select
+                    value={selectedDate}
+                    onChange={handleDateChange}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--text-primary)',
+                      fontSize: 13
+                    }}
+                  >
+                    <option value="">Choose a date</option>
+                    {getNextDays().map(date => (
+                      <option key={date.toISOString()} value={date.toISOString().split('T')[0]}>
+                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedDate && (
+                  <div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                      Available Time Slots for {formatDate(selectedDate)}
+                    </div>
+                    {loadingSlots ? (
+                      <div style={{ textAlign: 'center', padding: '16px' }}>
+                        <div style={{ width: 24, height: 24, border: '2px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }} />
+                      </div>
+                    ) : timeSlots.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: 12 }}>
+                        No available slots for this date
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {timeSlots.slice(0, 6).map((slot, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              padding: '6px 12px',
+                              background: 'rgba(16,185,129,0.1)',
+                              borderRadius: '20px',
+                              fontSize: 11,
+                              color: '#10b981',
+                              border: '1px solid rgba(16,185,129,0.2)'
+                            }}
+                          >
+                            {slot.start} - {slot.end}
+                          </span>
+                        ))}
+                        {timeSlots.length > 6 && (
+                          <span style={{
+                            padding: '6px 12px',
+                            background: 'rgba(255,255,255,0.05)',
+                            borderRadius: '20px',
+                            fontSize: 11,
+                            color: 'var(--text-muted)'
+                          }}>
+                            +{timeSlots.length - 6} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action Buttons */}
         {isAdmin ? (
@@ -645,7 +814,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
         )}
       </div>
 
-      {/* Quick View Tooltip on Hover (Optional) */}
+      {/* Quick View Tooltip */}
       {isHovered && isAdmin && (
         <div style={{
           position: 'absolute',
@@ -666,6 +835,12 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           Click for details
         </div>
       )}
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

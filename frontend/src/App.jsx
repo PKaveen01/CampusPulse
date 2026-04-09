@@ -9,6 +9,9 @@ import LoginPage from './pages/Auth/LoginPage'
 import SignupPage from './pages/Auth/SignupPage'
 import OAuth2RedirectPage from './pages/Auth/OAuth2RedirectPage'
 
+// Home Page
+import HomePage from './pages/HomePage'
+
 // Dashboards
 import UserDashboard from './pages/Dashboards/UserDashboard'
 import AdminDashboard from './pages/Dashboards/AdminDashboard'
@@ -48,15 +51,15 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <Routes>
-            {/* Public */}
+            {/* Public - Home Page (Root Route) */}
+            <Route path="/" element={<HomePage />} />
+            
+            {/* Auth pages */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
 
-            {/* Root redirect */}
-            <Route path="/" element={
-              <ProtectedRoute><DashboardRedirect /></ProtectedRoute>
-            } />
+            {/* Dashboard redirect */}
             <Route path="/dashboard" element={
               <ProtectedRoute><DashboardRedirect /></ProtectedRoute>
             } />

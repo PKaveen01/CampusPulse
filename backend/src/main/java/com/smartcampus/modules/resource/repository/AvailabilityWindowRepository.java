@@ -13,7 +13,9 @@ import java.util.List;
 public interface AvailabilityWindowRepository extends JpaRepository<AvailabilityWindow, Long> {
 
     List<AvailabilityWindow> findByResourceId(Long resourceId);
+
     List<AvailabilityWindow> findByResourceIdAndDayOfWeek(Long resourceId, Integer dayOfWeek);
+
     void deleteByResourceId(Long resourceId);
 
     @Query("SELECT COUNT(a) > 0 FROM AvailabilityWindow a WHERE a.resourceId = :resourceId " +
@@ -22,4 +24,10 @@ public interface AvailabilityWindowRepository extends JpaRepository<Availability
                                  @Param("dayOfWeek") Integer dayOfWeek,
                                  @Param("startTime") LocalTime startTime,
                                  @Param("endTime") LocalTime endTime);
+
+    // ==================== NEW QUERY FOR AVAILABLE TIME SLOTS ====================
+
+    @Query("SELECT a FROM AvailabilityWindow a WHERE a.resourceId = :resourceId AND a.dayOfWeek = :dayOfWeek ORDER BY a.startTime")
+    List<AvailabilityWindow> findAvailabilityWindowsForDay(@Param("resourceId") Long resourceId,
+                                                           @Param("dayOfWeek") Integer dayOfWeek);
 }

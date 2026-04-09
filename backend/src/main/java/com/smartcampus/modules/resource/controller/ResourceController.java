@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -134,6 +135,18 @@ public class ResourceController {
 
         Map<String, Boolean> response = new HashMap<>();
         response.put("available", isAvailable);
+        return ResponseEntity.ok(response);
+    }
+
+    // ==================== NEW: Get Available Time Slots for a Date ====================
+
+    @GetMapping("/{id}/available-slots")
+    public ResponseEntity<Map<String, Object>> getAvailableTimeSlots(
+            @PathVariable Long id,
+            @RequestParam String date) {
+
+        LocalDate bookingDate = LocalDate.parse(date);
+        Map<String, Object> response = resourceService.getAvailableTimeSlots(id, bookingDate);
         return ResponseEntity.ok(response);
     }
 
