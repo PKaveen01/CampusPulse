@@ -252,7 +252,7 @@ public class ResourceServiceImpl implements ResourceService {
                 resourceId, dayOfWeek, startTime, endTime);
     }
 
-    // ==================== NEW: AVAILABLE TIME SLOTS METHOD ====================
+    // ==================== AVAILABLE TIME SLOTS METHOD ====================
 
     @Override
     public Map<String, Object> getAvailableTimeSlots(Long resourceId, LocalDate date) {
@@ -262,21 +262,32 @@ public class ResourceServiceImpl implements ResourceService {
         List<Map<String, String>> availableSlots = new ArrayList<>();
 
         try {
-            int dayOfWeek = date.getDayOfWeek().getValue() - 1;
+            // Get day of week: Java Monday=1, Sunday=7 -> Convert to DB format Monday=0, Sunday=6
+            int javaDayOfWeek = date.getDayOfWeek().getValue();
+            int dayOfWeek = javaDayOfWeek - 1;
 
+            log.info("Date: {}, Java DayOfWeek: {}, DB DayOfWeek: {}", date, javaDayOfWeek, dayOfWeek);
+
+            // Get availability windows for this resource on this day
             List<AvailabilityWindow> windows = availabilityWindowRepository
                     .findByResourceIdAndDayOfWeek(resourceId, dayOfWeek);
 
+            log.info("Found {} availability windows for resource {} on day {}", windows.size(), resourceId, dayOfWeek);
+
             if (windows.isEmpty()) {
+                log.warn("No availability windows found for resource {} on day {}", resourceId, dayOfWeek);
                 response.put("date", date.toString());
                 response.put("availableSlots", availableSlots);
                 response.put("hasAvailability", false);
                 return response;
             }
 
+            // Generate 30-minute time slots
             for (AvailabilityWindow window : windows) {
                 LocalTime current = window.getStartTime();
                 LocalTime windowEnd = window.getEndTime();
+
+                log.info("Processing window: start={}, end={}", current, windowEnd);
 
                 while (current.isBefore(windowEnd)) {
                     LocalTime slotEnd = current.plusMinutes(30);
@@ -291,6 +302,8 @@ public class ResourceServiceImpl implements ResourceService {
                     current = slotEnd;
                 }
             }
+
+            log.info("Generated {} available slots for resource {} on {}", availableSlots.size(), resourceId, date);
 
         } catch (Exception e) {
             log.error("Error getting available time slots: ", e);
