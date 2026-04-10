@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, Calendar, Ticket, Bell, Users,
-  BarChart3, Shield, ArrowRight, CheckCircle,
-  MapPin, Clock, Star, TrendingUp, LogIn, UserPlus,
-  Menu, X, ChevronRight, Sparkles, MonitorSmartphone, Activity
+  Calendar, Users,
+  Shield, ArrowRight, CheckCircle,
+  MapPin, Clock, TrendingUp, LogIn, UserPlus,
+  Menu, X, ChevronRight, Sparkles, MonitorSmartphone,
+  Building2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+import facilitiesImage from '../components/images/facilities.jpg';
+import bookingImage from '../components/images/booking.jpg';
+import maintenanceImage from '../components/images/maintenance.jpg';
+import notificationsImage from '../components/images/notifications.jpg';
+import analyticsImage from '../components/images/analytics.jpg';
+import securityImage from '../components/images/security.jpg';
+import logoImage from '../components/images/logo.png';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -15,37 +24,37 @@ const HomePage = () => {
 
   const features = [
     {
-      icon: <Building2 size={24} />,
+      image: facilitiesImage,
       title: 'Facilities & Asset Catalogue',
       description: 'Explore lecture halls, labs, meeting rooms, auditoriums, and shared campus equipment with rich details and live availability.',
       color: '#3b82f6'
     },
     {
-      icon: <Calendar size={24} />,
+      image: bookingImage,
       title: 'Smart Booking Workflow',
       description: 'Reserve campus spaces through a streamlined booking flow with conflict prevention, approval routing, and schedule visibility.',
       color: '#10b981'
     },
     {
-      icon: <Ticket size={24} />,
+      image: maintenanceImage,
       title: 'Maintenance & Issue Tracking',
       description: 'Raise maintenance requests, monitor progress, and keep facilities operational through structured service workflows.',
       color: '#f59e0b'
     },
     {
-      icon: <Bell size={24} />,
+      image: notificationsImage,
       title: 'Instant Notifications',
       description: 'Receive updates for booking approvals, maintenance progress, cancellations, and important campus service alerts.',
       color: '#8b5cf6'
     },
     {
-      icon: <BarChart3 size={24} />,
+      image: analyticsImage,
       title: 'Operational Insights',
       description: 'Visualize resource utilization, booking trends, peak hours, and service performance to support better decisions.',
       color: '#ef4444'
     },
     {
-      icon: <Shield size={24} />,
+      image: securityImage,
       title: 'Role-Based Secure Access',
       description: 'Support students, staff, managers, technicians, and administrators with secure authentication and permission-based access.',
       color: '#06b6d4'
@@ -157,7 +166,7 @@ const HomePage = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          {/* Logo */}
+          {/* Logo with Image */}
           <div
             onClick={() => navigate('/')}
             style={{
@@ -167,18 +176,20 @@ const HomePage = () => {
               cursor: 'pointer'
             }}
           >
-            <div style={{
-              width: 42,
-              height: 42,
-              borderRadius: 14,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 10px 30px rgba(59,130,246,0.25)'
-            }}>
-              <Activity size={22} style={{ color: 'white' }} />
-            </div>
+            <img
+              src={logoImage}
+              alt="CampusPulse Logo"
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 12,
+                objectFit: 'cover'
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://via.placeholder.com/42x42?text=CP';
+              }}
+            />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.3 }}>CampusPulse</span>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Smart Campus Operations</span>
@@ -389,312 +400,176 @@ const HomePage = () => {
       <section style={{
         position: 'relative',
         overflow: 'hidden',
-        padding: '96px 24px 72px',
+        padding: '120px 24px 88px',
         background: `
-          radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 28%),
-          radial-gradient(circle at top right, rgba(139,92,246,0.12), transparent 24%),
+          radial-gradient(circle at 15% 20%, rgba(59,130,246,0.18), transparent 24%),
+          radial-gradient(circle at 85% 18%, rgba(139,92,246,0.14), transparent 22%),
+          radial-gradient(circle at 50% 100%, rgba(16,185,129,0.08), transparent 28%),
           linear-gradient(180deg, var(--bg) 0%, rgba(59,130,246,0.03) 100%)
         `
       }}>
         <div style={{
-          maxWidth: 1240,
+          position: 'absolute',
+          top: -120,
+          left: -120,
+          width: 260,
+          height: 260,
+          borderRadius: '50%',
+          background: 'rgba(59,130,246,0.12)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: -60,
+          right: -100,
+          width: 240,
+          height: 240,
+          borderRadius: '50%',
+          background: 'rgba(139,92,246,0.12)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{
+          maxWidth: 980,
           margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 48,
-          alignItems: 'center'
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1
         }}>
-          <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 14px',
-              background: 'rgba(59,130,246,0.1)',
-              border: '1px solid rgba(59,130,246,0.18)',
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--accent)',
-              marginBottom: 22
-            }}>
-              <Sparkles size={14} />
-              Digital platform for modern campus operations
-            </div>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '7px 16px',
+            background: 'rgba(59,130,246,0.1)',
+            border: '1px solid rgba(59,130,246,0.18)',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--accent)',
+            marginBottom: 24
+          }}>
+            <Sparkles size={14} />
+            Digital platform for modern campus operations
+          </div>
 
-            <h1 style={{
-              fontSize: 'clamp(40px, 6vw, 64px)',
-              fontWeight: 800,
-              lineHeight: 1.05,
-              marginBottom: 20,
-              letterSpacing: '-0.03em'
+          <h1 style={{
+            fontSize: 'clamp(42px, 6vw, 72px)',
+            fontWeight: 800,
+            lineHeight: 1.02,
+            marginBottom: 22,
+            letterSpacing: '-0.04em',
+            maxWidth: 900,
+            marginInline: 'auto'
+          }}>
+            Manage campus facilities,
+            <span style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #ffffff, var(--accent), #8b5cf6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
             }}>
-              Manage campus facilities,
-              <span style={{
-                display: 'block',
-                background: 'linear-gradient(135deg, #ffffff, var(--accent), #8b5cf6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                bookings, and maintenance
-              </span>
-              with <span style={{ color: 'var(--accent)' }}>CampusPulse</span>
-            </h1>
+              bookings, and maintenance
+            </span>
+            with <span style={{ color: 'var(--accent)' }}>CampusPulse</span>
+          </h1>
 
-            <p style={{
-              fontSize: 'clamp(16px, 2vw, 18px)',
-              color: 'var(--text-secondary)',
-              marginBottom: 28,
-              maxWidth: 640,
-              lineHeight: 1.7
-            }}>
-              CampusPulse brings together facility discovery, booking workflows,
-              maintenance reporting, notifications, and operational analytics in a single
-              platform built for universities and institutions.
-            </p>
+          <p style={{
+            fontSize: 'clamp(17px, 2vw, 20px)',
+            color: 'var(--text-secondary)',
+            marginBottom: 34,
+            maxWidth: 760,
+            marginInline: 'auto',
+            lineHeight: 1.8
+          }}>
+            CampusPulse brings together facility discovery, booking workflows,
+            maintenance reporting, notifications, and operational analytics in a single
+            platform built for universities and institutions.
+          </p>
 
-            <div style={{
-              display: 'flex',
-              gap: 16,
-              flexWrap: 'wrap',
-              marginBottom: 28
-            }}>
-              <button
-                onClick={handleGetStarted}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 16,
+            flexWrap: 'wrap',
+            marginBottom: 32
+          }}>
+            <button
+              onClick={handleGetStarted}
+              style={{
+                padding: '14px 30px',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 12px 30px rgba(59,130,246,0.24)'
+              }}
+            >
+              Get Started <ArrowRight size={18} />
+            </button>
+
+            <button
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                padding: '14px 28px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontWeight: 500
+              }}
+            >
+              Explore Features
+            </button>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: 18
+          }}>
+            {quickHighlights.map((item, idx) => (
+              <div
+                key={idx}
                 style={{
-                  padding: '14px 30px',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                  border: 'none',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  boxShadow: '0 12px 30px rgba(59,130,246,0.24)'
-                }}
-              >
-                Get Started <ArrowRight size={18} />
-              </button>
-
-              <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                style={{
-                  padding: '14px 28px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)',
                   color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  fontWeight: 500
+                  fontSize: 14,
+                  padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 999
                 }}
               >
-                Explore Features
-              </button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 18
-            }}>
-              {quickHighlights.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    color: 'var(--text-secondary)',
-                    fontSize: 14
-                  }}
-                >
-                  <span style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 999,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.07)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--accent)'
-                  }}>
-                    {item.icon}
-                  </span>
-                  {item.text}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview Card */}
-          <div>
-            <div style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 24,
-              padding: 24,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.22)'
-            }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1.25fr 0.9fr',
-                gap: 16,
-                marginBottom: 16
-              }}>
-                <div style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 20,
-                  padding: 20
+                <span style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent)'
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 18
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>
-                        Today’s overview
-                      </div>
-                      <div style={{ fontSize: 18, fontWeight: 700 }}>
-                        Campus activity snapshot
-                      </div>
-                    </div>
-                    <div style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 14,
-                      background: 'rgba(59,130,246,0.12)',
-                      color: 'var(--accent)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <BarChart3 size={20} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gap: 12 }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      background: 'rgba(255,255,255,0.03)'
-                    }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Lecture Hall A2</span>
-                      <span style={{ color: '#10b981', fontSize: 13, fontWeight: 600 }}>Available</span>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      background: 'rgba(255,255,255,0.03)'
-                    }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Computer Lab 04</span>
-                      <span style={{ color: '#f59e0b', fontSize: 13, fontWeight: 600 }}>Booked 2–4 PM</span>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      background: 'rgba(255,255,255,0.03)'
-                    }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Projector Unit P-12</span>
-                      <span style={{ color: '#8b5cf6', fontSize: 13, fontWeight: 600 }}>In use</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gap: 16
-                }}>
-                  <div style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 20,
-                    padding: 18
-                  }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>
-                      Pending service tickets
-                    </div>
-                    <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 10 }}>12</div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontSize: 13,
-                      color: '#f59e0b'
-                    }}>
-                      <Ticket size={14} /> 4 high priority
-                    </div>
-                  </div>
-
-                  <div style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 20,
-                    padding: 18
-                  }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 6 }}>
-                      Booking success rate
-                    </div>
-                    <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 10 }}>98%</div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontSize: 13,
-                      color: '#10b981'
-                    }}>
-                      <CheckCircle size={14} /> Stable system flow
-                    </div>
-                  </div>
-                </div>
+                  {item.icon}
+                </span>
+                {item.text}
               </div>
-
-              <div style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 20,
-                padding: 18,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 16,
-                flexWrap: 'wrap'
-              }}>
-                <div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 4 }}>
-                    Trusted by campus teams
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>
-                    One platform for facilities, services, and scheduling
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: '#fbbf24' }}>
-                  <Star size={16} fill="#fbbf24" />
-                  <Star size={16} fill="#fbbf24" />
-                  <Star size={16} fill="#fbbf24" />
-                  <Star size={16} fill="#fbbf24" />
-                  <Star size={16} fill="#fbbf24" />
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -719,9 +594,19 @@ const HomePage = () => {
                 border: '1px solid var(--border)',
                 borderRadius: 20,
                 padding: 24,
-                textAlign: 'center'
+                textAlign: 'center',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                background: 'linear-gradient(90deg, var(--accent), rgba(139,92,246,0.9))'
+              }} />
               <div style={{
                 width: 42,
                 height: 42,
@@ -746,7 +631,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section with Images */}
       <section id="features" style={{ padding: '88px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
@@ -779,9 +664,10 @@ const HomePage = () => {
                   background: 'var(--bg-card)',
                   borderRadius: 22,
                   border: '1px solid var(--border)',
-                  padding: 26,
+                  overflow: 'hidden',
                   transition: 'all 0.3s',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.08)'
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+                  position: 'relative'
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.transform = 'translateY(-6px)';
@@ -795,31 +681,80 @@ const HomePage = () => {
                 }}
               >
                 <div style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 16,
-                  background: `${feature.color}18`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 20,
-                  color: feature.color
-                }}>
-                  {feature.icon}
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>{feature.title}</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.65, marginBottom: 16 }}>
-                  {feature.description}
-                </p>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: feature.color,
+                  position: 'absolute',
+                  top: 16,
+                  left: 16,
+                  zIndex: 2,
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  background: 'rgba(10,12,18,0.72)',
+                  border: `1px solid ${feature.color}55`,
+                  color: '#ffffff',
+                  fontSize: 12,
                   fontWeight: 600,
-                  fontSize: 14
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)'
                 }}>
-                  Learn more <ChevronRight size={16} />
+                  CampusPulse Module
+                </div>
+
+                <div style={{
+                  height: 210,
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}>
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.4s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.12) 45%, rgba(0,0,0,0.08))'
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 16,
+                    left: 18,
+                    right: 18,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      background: feature.color,
+                      boxShadow: `0 0 18px ${feature.color}`
+                    }} />
+                    <div style={{
+                      padding: '5px 10px',
+                      borderRadius: 999,
+                      background: 'rgba(255,255,255,0.12)',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      border: '1px solid rgba(255,255,255,0.16)'
+                    }}>
+                      Active Feature
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ padding: 24 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>{feature.title}</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, marginBottom: 0 }}>
+                    {feature.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -860,7 +795,16 @@ const HomePage = () => {
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border)',
                   borderRadius: 22,
-                  padding: 26
+                  padding: 26,
+                  transition: 'all 0.25s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 14px 28px rgba(0,0,0,0.12)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 <div style={{
@@ -898,19 +842,34 @@ const HomePage = () => {
           background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 28,
-          padding: '42px 28px'
+          padding: '42px 28px',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, marginBottom: 14 }}>
+          <div style={{
+            position: 'absolute',
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            background: 'rgba(59,130,246,0.12)',
+            filter: 'blur(50px)',
+            top: -70,
+            right: -50,
+            pointerEvents: 'none'
+          }} />
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, marginBottom: 14, position: 'relative', zIndex: 1 }}>
             Ready to transform campus operations?
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 30, maxWidth: 620, marginInline: 'auto', lineHeight: 1.7 }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 30, maxWidth: 620, marginInline: 'auto', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
             Join hundreds of students and staff using CampusPulse to manage campus resources efficiently.
           </p>
           <div style={{
             display: 'flex',
             justifyContent: 'center',
             gap: 14,
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            position: 'relative',
+            zIndex: 1
           }}>
             <button
               onClick={handleGetStarted}
