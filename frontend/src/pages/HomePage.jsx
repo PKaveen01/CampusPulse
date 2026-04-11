@@ -16,6 +16,7 @@ import notificationsImage from '../components/images/notifications.jpg';
 import analyticsImage from '../components/images/analytics.jpg';
 import securityImage from '../components/images/security.jpg';
 import logoImage from '../components/images/logo.png';
+import heroBackgroundImage from '../components/images/background.jpg';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -396,18 +397,28 @@ const HomePage = () => {
         )}
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section with Background Image */}
       <section style={{
         position: 'relative',
         overflow: 'hidden',
         padding: '120px 24px 88px',
-        background: `
-          radial-gradient(circle at 15% 20%, rgba(59,130,246,0.18), transparent 24%),
-          radial-gradient(circle at 85% 18%, rgba(139,92,246,0.14), transparent 22%),
-          radial-gradient(circle at 50% 100%, rgba(16,185,129,0.08), transparent 28%),
-          linear-gradient(180deg, var(--bg) 0%, rgba(59,130,246,0.03) 100%)
-        `
+        backgroundImage: `url(${heroBackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        isolation: 'isolate'
       }}>
+        {/* Dark Overlay for better text readability */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(10,12,18,0.85) 0%, rgba(10,12,18,0.75) 100%)',
+          zIndex: 0
+        }} />
+        
         <div style={{
           position: 'absolute',
           top: -120,
@@ -417,7 +428,8 @@ const HomePage = () => {
           borderRadius: '50%',
           background: 'rgba(59,130,246,0.12)',
           filter: 'blur(60px)',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          zIndex: 0
         }} />
         <div style={{
           position: 'absolute',
@@ -428,7 +440,8 @@ const HomePage = () => {
           borderRadius: '50%',
           background: 'rgba(139,92,246,0.12)',
           filter: 'blur(60px)',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          zIndex: 0
         }} />
 
         <div style={{
@@ -449,7 +462,8 @@ const HomePage = () => {
             fontSize: 12,
             fontWeight: 600,
             color: 'var(--accent)',
-            marginBottom: 24
+            marginBottom: 24,
+            backdropFilter: 'blur(8px)'
           }}>
             <Sparkles size={14} />
             Digital platform for modern campus operations
@@ -631,7 +645,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section with Images */}
+      {/* Features Section with Images - Removed Module Tag */}
       <section id="features" style={{ padding: '88px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
@@ -680,24 +694,6 @@ const HomePage = () => {
                   e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
                 }}
               >
-                <div style={{
-                  position: 'absolute',
-                  top: 16,
-                  left: 16,
-                  zIndex: 2,
-                  padding: '6px 12px',
-                  borderRadius: 999,
-                  background: 'rgba(10,12,18,0.72)',
-                  border: `1px solid ${feature.color}55`,
-                  color: '#ffffff',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)'
-                }}>
-                  CampusPulse Module
-                </div>
-
                 <div style={{
                   height: 210,
                   overflow: 'hidden',
