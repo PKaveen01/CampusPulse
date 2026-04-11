@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { 
   Building2, Users, MapPin, Edit, Trash2, Power, PowerOff, Calendar, 
   Wind, Tv, Wifi, Plug, Smartphone, Clock, AlertTriangle, CheckCircle, 
-  BookOpen, Wrench, History, BarChart3, Eye, Star, TrendingUp, X 
+  BookOpen, Wrench, History, BarChart3, Eye, Star, TrendingUp, X, Image as ImageIcon 
 } from 'lucide-react';
 
 const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetails, onViewHistory, isAdmin }) => {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   
   // Availability state
@@ -93,6 +94,32 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
       : null;
 
   const fallbackInitial = resource.name ? resource.name.charAt(0).toUpperCase() : 'R';
+
+  // Check if image URL is valid and from a real source
+  const hasValidImageUrl = resource.imageUrl && 
+                           resource.imageUrl.trim() !== '' && 
+                           !resource.imageUrl.includes('placeholder') &&
+                           !imageError;
+
+  // Get image URL - use the one from resource or fallback to unsplash
+  const getImageUrl = () => {
+    if (hasValidImageUrl) {
+      return resource.imageUrl;
+    }
+    // Fallback to Unsplash images based on resource type
+    const fallbackImages = {
+      'Lecture Hall': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400',
+      'Meeting Room': 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400',
+      'Laboratory': 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400',
+      'Computer Lab': 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400',
+      'Study Room': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400',
+      'Auditorium': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400',
+      'Equipment': 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400'
+    };
+    return fallbackImages[resource.resourceType] || 'https://images.unsplash.com/photo-1562774053-701939374585?w=400';
+  };
+
+  const imageUrl = getImageUrl();
 
   // Get next 7 days for date selection
   const getNextDays = () => {
@@ -215,7 +242,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
         </div>
       )}
 
-      {/* Image Section */}
+      {/* Image Section - Enhanced with better fallback */}
       <div style={{
         height: 160,
         background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
@@ -225,28 +252,74 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
         justifyContent: 'center',
         overflow: 'hidden'
       }}>
-        {resource.imageUrl && !imageError ? (
-          <img 
-            src={resource.imageUrl} 
-            alt={resource.name}
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'cover',
-              transition: 'transform 0.3s ease',
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)'
-            }}
-            onError={() => setImageError(true)}
-          />
-        ) : (
+        {/* Loading State */}
+        {imageLoading && (
           <div style={{
-            width: '100%',
-            height: '100%',
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.3)',
+            zIndex: 2
+          }}>
+            <div style={{
+              width: 30,
+              height: 30,
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderTopColor: 'white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          </div>
+        )}
+        
+        {/* Actual Image */}
+        <img 
+          src={imageUrl}
+          alt={resource.name}
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            transition: 'transform 0.3s ease, opacity 0.3s ease',
+            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            opacity: imageLoading ? 0 : 1
+          }}
+          onLoad={() => setImageLoading(false)}
+          onError={(e) => {
+            setImageLoading(false);
+            setImageError(true);
+            // If the image fails, try to use a fallback based on resource type
+            const fallbackMap = {
+              'Lecture Hall': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400',
+              'Meeting Room': 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400',
+              'Laboratory': 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400',
+              'Computer Lab': 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400',
+              'Study Room': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400',
+              'Auditorium': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400'
+            };
+            if (fallbackMap[resource.resourceType] && e.target.src !== fallbackMap[resource.resourceType]) {
+              e.target.src = fallbackMap[resource.resourceType];
+              setImageError(false);
+            } else {
+              e.target.style.display = 'none';
+              e.target.parentElement.style.background = 'linear-gradient(135deg, var(--accent), var(--accent-2))';
+            }
+          }}
+        />
+        
+        {/* Fallback Content (shown when no image) */}
+        {(!hasValidImageUrl && !imageLoading) && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white'
+            color: 'white',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))'
           }}>
             <Building2 size={56} style={{ opacity: 0.35, marginBottom: 6 }} />
             <div style={{
@@ -273,7 +346,8 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           left: 0,
           right: 0,
           height: 60,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)'
+          background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)',
+          pointerEvents: 'none'
         }} />
         
         {/* Status Badge */}
@@ -284,7 +358,8 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
-          gap: 6
+          gap: 6,
+          zIndex: 5
         }}>
           <span style={{
             padding: '4px 12px',
@@ -538,7 +613,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
           </span>
         </div>
 
-        {/* ========== NEW: AVAILABILITY TIME SLOTS SECTION ========== */}
+        {/* Availability Time Slots Section */}
         {resource.status === 'ACTIVE' && !isAdmin && (
           <div style={{ marginBottom: 16 }}>
             <button

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Clock } from 'lucide-react';
+import { X, Plus, Trash2, Clock, Image as ImageIcon } from 'lucide-react';
 
 const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
     const [formData, setFormData] = useState({
@@ -24,8 +24,40 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
     const [imagePreviewError, setImagePreviewError] = useState(false);
     const [formTouched, setFormTouched] = useState(false);
     const [loadingWindows, setLoadingWindows] = useState(false);
+    const [selectedSuggestedImage, setSelectedSuggestedImage] = useState('');
 
-    const resourceTypes = ['Lecture Hall', 'Laboratory', 'Meeting Room', 'Projector', 'Camera', 'Computer Lab', 'Study Room'];
+    // Suggested images based on resource type
+    const suggestedImages = {
+        'Lecture Hall': [
+            { url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400', name: 'Modern Lecture Hall' },
+            { url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400', name: 'Smart Lecture Hall' },
+            { url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400', name: 'University Lecture Hall' },
+        ],
+        'Meeting Room': [
+            { url: 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400', name: 'Executive Meeting Room' },
+            { url: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400', name: 'Modern Conference Room' },
+            { url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400', name: 'Small Meeting Space' },
+        ],
+        'Laboratory': [
+            { url: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400', name: 'Computer Lab' },
+            { url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400', name: 'Science Lab' },
+            { url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400', name: 'Research Lab' },
+        ],
+        'Study Room': [
+            { url: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400', name: 'Quiet Study Room' },
+            { url: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400', name: 'Group Study Area' },
+        ],
+        'Auditorium': [
+            { url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400', name: 'Main Auditorium' },
+            { url: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400', name: 'Outdoor Amphitheater' },
+        ],
+        'Equipment': [
+            { url: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400', name: 'Projector Equipment' },
+            { url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400', name: 'Camera Equipment' },
+        ]
+    };
+
+    const resourceTypes = ['Lecture Hall', 'Laboratory', 'Meeting Room', 'Projector', 'Camera', 'Computer Lab', 'Study Room', 'Auditorium', 'Seminar Room'];
 
     const daysOfWeek = [
         { value: 0, label: 'Monday' },
@@ -88,6 +120,14 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
         setImagePreviewError(false);
     }, [formData.imageUrl]);
 
+    // Update suggested images when resource type changes
+    useEffect(() => {
+        const images = suggestedImages[formData.resourceType];
+        if (images && images.length > 0 && !formData.imageUrl) {
+            setSelectedSuggestedImage('');
+        }
+    }, [formData.resourceType]);
+
     const addAvailabilityWindow = () => {
         setAvailabilityWindows([...availabilityWindows, { id: null, dayOfWeek: 0, startTime: '09:00', endTime: '17:00' }]);
         setFormTouched(true);
@@ -114,6 +154,13 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
         }
         const updated = availabilityWindows.filter((_, i) => i !== index);
         setAvailabilityWindows(updated);
+        setFormTouched(true);
+    };
+
+    const useSuggestedImage = (imageUrl) => {
+        setFormData(prev => ({ ...prev, imageUrl: imageUrl }));
+        setSelectedSuggestedImage(imageUrl);
+        setImagePreviewError(false);
         setFormTouched(true);
     };
 
@@ -172,6 +219,28 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const saveAvailabilityWindows = async (resourceId) => {
+        if (!resourceId || availabilityWindows.length === 0) return;
+        
+        for (const window of availabilityWindows) {
+            if (window.startTime && window.endTime) {
+                await fetch(`/api/resources/availability`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: JSON.stringify({
+                        resourceId: resourceId,
+                        dayOfWeek: window.dayOfWeek,
+                        startTime: window.startTime,
+                        endTime: window.endTime
+                    })
+                });
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setTouched({
@@ -187,41 +256,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
         });
         
         if (validate()) {
-            await onSubmit(formData);
+            const result = await onSubmit(formData);
             
-            if (isEditing && resource?.id) {
-                for (const window of availabilityWindows) {
-                    if (window.id) {
-                        await fetch(`/api/resources/availability`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-                            },
-                            body: JSON.stringify({
-                                id: window.id,
-                                resourceId: resource.id,
-                                dayOfWeek: window.dayOfWeek,
-                                startTime: window.startTime,
-                                endTime: window.endTime
-                            })
-                        });
-                    } else if (window.startTime && window.endTime) {
-                        await fetch(`/api/resources/availability`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-                            },
-                            body: JSON.stringify({
-                                resourceId: resource.id,
-                                dayOfWeek: window.dayOfWeek,
-                                startTime: window.startTime,
-                                endTime: window.endTime
-                            })
-                        });
-                    }
-                }
+            let resourceId = resource?.id;
+            if (!resourceId && result && result.id) {
+                resourceId = result.id;
+            }
+            
+            if (resourceId && availabilityWindows.length > 0) {
+                await saveAvailabilityWindows(resourceId);
             }
         }
     };
@@ -244,6 +287,8 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
         MAINTENANCE: 'Use this when the resource is under maintenance or inspection.'
     };
 
+    const currentSuggestedImages = suggestedImages[formData.resourceType] || suggestedImages['Meeting Room'];
+
     return (
         <div style={{
             position: 'fixed',
@@ -263,7 +308,7 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                 background: 'var(--bg-card)',
                 borderRadius: 'var(--radius)',
                 width: '90%',
-                maxWidth: 650,
+                maxWidth: 680,
                 maxHeight: '90vh',
                 overflow: 'auto',
                 border: '1px solid var(--border)',
@@ -329,7 +374,13 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
 
                     {/* Resource Name */}
                     <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            color: 'var(--text-secondary)'
+                        }}>
                             Resource Name <span style={{ color: 'var(--danger)' }}>*</span>
                         </label>
                         <input
@@ -357,7 +408,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     {/* Resource Type & Capacity */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Resource Type</label>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                marginBottom: 6,
+                                color: 'var(--text-secondary)'
+                            }}>
+                                Resource Type
+                            </label>
                             <select
                                 value={formData.resourceType}
                                 onChange={(e) => handleFieldChange('resourceType', e.target.value)}
@@ -376,7 +435,13 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                             </select>
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                marginBottom: 6,
+                                color: 'var(--text-secondary)'
+                            }}>
                                 Capacity <span style={{ color: 'var(--danger)' }}>*</span>
                             </label>
                             <input
@@ -404,7 +469,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     {/* Building & Floor */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Building</label>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                marginBottom: 6,
+                                color: 'var(--text-secondary)'
+                            }}>
+                                Building
+                            </label>
                             <input
                                 type="text"
                                 value={formData.building}
@@ -424,7 +497,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                             {errors.building && touched.building && <p style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>{errors.building}</p>}
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Floor</label>
+                            <label style={{
+                                display: 'block',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                marginBottom: 6,
+                                color: 'var(--text-secondary)'
+                            }}>
+                                Floor
+                            </label>
                             <input
                                 type="text"
                                 value={formData.floor}
@@ -447,7 +528,13 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     
                     {/* Location */}
                     <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            color: 'var(--text-secondary)'
+                        }}>
                             Location Details <span style={{ color: 'var(--danger)' }}>*</span>
                         </label>
                         <input
@@ -471,7 +558,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     
                     {/* Status */}
                     <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Status</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            Status
+                        </label>
                         <select
                             value={formData.status}
                             onChange={(e) => handleFieldChange('status', e.target.value)}
@@ -495,7 +590,13 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
 
                     {/* Availability Windows Section */}
                     <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--text-primary)' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            marginBottom: 10,
+                            color: 'var(--text-primary)'
+                        }}>
                             <Clock size={14} style={{ display: 'inline', marginRight: 6 }} />
                             Availability Windows (Recurring Weekly)
                         </label>
@@ -616,7 +717,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     
                     {/* Description */}
                     <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Description</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            Description
+                        </label>
                         <textarea
                             rows="3"
                             value={formData.description}
@@ -644,7 +753,15 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                     
                     {/* Amenities */}
                     <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 10, color: 'var(--text-secondary)' }}>Amenities</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 10,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            Amenities
+                        </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
                                 <input type="checkbox" checked={formData.isAirConditioned} onChange={(e) => handleFieldChange('isAirConditioned', e.target.checked)} style={{ accentColor: 'var(--accent)' }} /> Air Conditioned
@@ -667,9 +784,18 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                         </div>
                     </div>
                     
-                    {/* Image URL */}
+                    {/* Image URL with Suggested Images */}
                     <div style={{ marginBottom: 24 }}>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--text-secondary)' }}>Image URL</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            marginBottom: 6,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <ImageIcon size={14} style={{ display: 'inline', marginRight: 6 }} />
+                            Image URL
+                        </label>
                         <input
                             type="url"
                             value={formData.imageUrl}
@@ -687,12 +813,77 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                             }}
                         />
                         {errors.imageUrl && touched.imageUrl && <p style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>{errors.imageUrl}</p>}
+
+                        {/* Suggested Images */}
+                        {currentSuggestedImages && (
+                            <div style={{ marginTop: 12 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                                    Suggested Images for {formData.resourceType}:
+                                </div>
+                                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                    {currentSuggestedImages.map((img, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => useSuggestedImage(img.url)}
+                                            style={{
+                                                width: 80,
+                                                height: 80,
+                                                borderRadius: 'var(--radius-sm)',
+                                                overflow: 'hidden',
+                                                cursor: 'pointer',
+                                                border: selectedSuggestedImage === img.url ? '2px solid var(--accent)' : '1px solid var(--border)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                        >
+                                            <img
+                                                src={img.url}
+                                                alt={img.name}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Image Preview */}
                         {formData.imageUrl && !errors.imageUrl && (
-                            <div style={{ marginTop: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: 'rgba(255,255,255,0.03)' }}>
+                            <div style={{
+                                marginTop: 12,
+                                border: '1px solid var(--border)',
+                                borderRadius: 'var(--radius-sm)',
+                                overflow: 'hidden',
+                                background: 'rgba(255,255,255,0.03)'
+                            }}>
                                 {!imagePreviewError ? (
-                                    <img src={formData.imageUrl} alt="Resource preview" onError={() => setImagePreviewError(true)} style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+                                    <img
+                                        src={formData.imageUrl}
+                                        alt="Resource preview"
+                                        onError={() => setImagePreviewError(true)}
+                                        style={{
+                                            width: '100%',
+                                            height: 180,
+                                            objectFit: 'cover',
+                                            display: 'block'
+                                        }}
+                                    />
                                 ) : (
-                                    <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>Unable to preview this image</div>
+                                    <div style={{
+                                        height: 180,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'var(--text-secondary)',
+                                        fontSize: 13
+                                    }}>
+                                        Unable to preview this image
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -706,27 +897,76 @@ const ResourceForm = ({ resource, onSubmit, onClose, isEditing = false }) => {
                         border: '1px solid rgba(52,211,153,0.15)',
                         borderRadius: 'var(--radius-sm)'
                     }}>
-                        <h4 style={{ margin: '0 0 8px 0', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Quick Summary</h4>
+                        <h4 style={{
+                            margin: '0 0 8px 0',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: 'var(--text-primary)'
+                        }}>
+                            Quick Summary
+                        </h4>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Type: <strong style={{ color: 'var(--text-primary)' }}>{formData.resourceType || '-'}</strong></span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Status: <strong style={{ color: 'var(--text-primary)' }}>{formData.status || '-'}</strong></span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Capacity: <strong style={{ color: 'var(--text-primary)' }}>{formData.capacity || '-'}</strong></span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Amenities: <strong style={{ color: 'var(--text-primary)' }}>{selectedAmenitiesCount}</strong></span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Availability Windows: <strong style={{ color: 'var(--text-primary)' }}>{availabilityWindows.length}</strong></span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Type: <strong style={{ color: 'var(--text-primary)' }}>{formData.resourceType || '-'}</strong>
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Status: <strong style={{ color: 'var(--text-primary)' }}>{formData.status || '-'}</strong>
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Capacity: <strong style={{ color: 'var(--text-primary)' }}>{formData.capacity || '-'}</strong>
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Amenities: <strong style={{ color: 'var(--text-primary)' }}>{selectedAmenitiesCount}</strong>
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Availability Windows: <strong style={{ color: 'var(--text-primary)' }}>{availabilityWindows.length}</strong>
+                            </span>
                         </div>
                     </div>
 
                     {/* Buttons */}
                     <div style={{ display: 'flex', gap: 12 }}>
-                        <button type="submit" style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', border: 'none', borderRadius: 'var(--radius-sm)', color: 'white', cursor: 'pointer', fontSize: 14, fontWeight: 500, transition: 'all 0.2s' }}
+                        <button
+                            type="submit"
+                            style={{
+                                flex: 1,
+                                padding: '12px',
+                                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                                border: 'none',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'white',
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                fontWeight: 500,
+                                transition: 'all 0.2s'
+                            }}
                             onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                             onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                         >
                             {isEditing ? 'Update Resource' : 'Create Resource'}
                         </button>
-                        <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 14, transition: 'all 0.2s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'var(--danger)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            style={{
+                                flex: 1,
+                                padding: '12px',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid var(--border)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                                e.currentTarget.style.borderColor = 'var(--danger)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                            }}
                         >
                             Cancel
                         </button>
