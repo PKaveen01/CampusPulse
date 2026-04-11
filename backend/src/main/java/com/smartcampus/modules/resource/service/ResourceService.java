@@ -38,13 +38,7 @@ public interface ResourceService {
     boolean isResourceAvailable(Long resourceId, Integer dayOfWeek,
                                 LocalTime startTime, LocalTime endTime);
 
-    // ========== NEW: Available Time Slots ==========
-    /**
-     * Get available time slots for a resource on a specific date
-     * @param resourceId The resource ID
-     * @param date The booking date
-     * @return Map containing date, available slots list, and availability flag
-     */
+    // Available Time Slots
     Map<String, Object> getAvailableTimeSlots(Long resourceId, LocalDate date);
 
     // Validation
@@ -54,37 +48,10 @@ public interface ResourceService {
     long getActiveResourcesCount();
     Map<String, Long> getResourceTypeStatistics();
 
-    // ========== ANALYTICS METHODS ==========
-
-    /**
-     * Get complete analytics dashboard data
-     * @return Map containing all analytics data (total, active, by type, etc.)
-     */
+    // Analytics Methods
     Map<String, Object> getResourceAnalytics();
-
-    /**
-     * Get resources needing maintenance based on usage
-     * @return List of resources that need maintenance
-     */
     List<ResourceDTO> getResourcesNeedingMaintenance();
-
-    /**
-     * Get utilization statistics for each resource type
-     * @return Map of resource type to utilization percentage
-     */
     Map<String, Double> getUtilizationByType();
-
-    /**
-     * Get resource trend data for chart
-     * @param range week, month, or year
-     * @return List of trend data points with label and count
-     */
     List<Map<String, Object>> getResourceTrend(String range);
-
-    /**
-     * Export analytics data as CSV
-     * @param range week, month, or year
-     * @return CSV content as string
-     */
     String exportAnalyticsToCsv(String range);
 }
