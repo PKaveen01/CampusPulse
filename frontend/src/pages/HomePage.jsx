@@ -5,7 +5,8 @@ import {
   Shield, ArrowRight, CheckCircle,
   MapPin, Clock, TrendingUp, LogIn, UserPlus,
   Menu, X, ChevronRight, Sparkles, MonitorSmartphone,
-  Building2
+  Building2, Mail, Phone, MapPin as MapPinIcon, Globe,
+  Twitter, Github, Linkedin, Instagram, Facebook
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -145,6 +146,14 @@ const HomePage = () => {
     } else {
       navigate('/login');
     }
+  };
+
+  const handleEmailClick = () => {
+    window.location.href = 'mailto:support@campuspulse.com';
+  };
+
+  const handlePhoneClick = () => {
+    window.location.href = 'tel:+1234567890';
   };
 
   return (
@@ -645,7 +654,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section with Images - Removed Module Tag */}
+      {/* Features Section with Images */}
       <section id="features" style={{ padding: '88px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
@@ -905,30 +914,311 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer with Contact Info & Social Media */}
       <footer
         id="contact"
         style={{
-          padding: '42px 24px',
+          padding: '48px 24px 32px',
           borderTop: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-          fontSize: 13
+          background: 'var(--bg-card)'
         }}
       >
         <div style={{
           maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 16,
-          flexWrap: 'wrap'
+          margin: '0 auto'
         }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-secondary)' }}>CampusPulse</p>
-            <p style={{ margin: '6px 0 0' }}>Smart Campus Operations Platform</p>
+          {/* Footer Main Row */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: 40,
+            marginBottom: 40
+          }}>
+            {/* Brand Column */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <img
+                  src={logoImage}
+                  alt="CampusPulse Logo"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    objectFit: 'cover'
+                  }}
+                />
+                <span style={{ fontSize: 18, fontWeight: 700 }}>CampusPulse</span>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>
+                Smart Campus Operations Platform — simplifying facility management, bookings, and maintenance for modern educational institutions.
+              </p>
+              {/* Social Media Icons */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <a
+                  href="https://twitter.com/campuspulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-secondary)'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#1DA1F2';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                >
+                  <Twitter size={18} />
+                </a>
+                <a
+                  href="https://github.com/campuspulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-secondary)'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#333';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                >
+                  <Github size={18} />
+                </a>
+                <a
+                  href="https://linkedin.com/company/campuspulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-secondary)'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#0077b5';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                >
+                  <Linkedin size={18} />
+                </a>
+                <a
+                  href="https://instagram.com/campuspulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-secondary)'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#E4405F';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                >
+                  <Instagram size={18} />
+                </a>
+                <a
+                  href="https://facebook.com/campuspulse"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-secondary)'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#1877f2';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                >
+                  <Facebook size={18} />
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Links Column */}
+            <div>
+              <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Quick Links</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ marginBottom: 10 }}>
+                  <a href="#features" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Features</a>
+                </li>
+                <li style={{ marginBottom: 10 }}>
+                  <a href="#why-us" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Why Us</a>
+                </li>
+                <li style={{ marginBottom: 10 }}>
+                  <a href="/resources" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Resources</a>
+                </li>
+                <li style={{ marginBottom: 10 }}>
+                  <a href="/bookings" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Bookings</a>
+                </li>
+                <li style={{ marginBottom: 10 }}>
+                  <a href="/tickets" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Support</a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact Info Column */}
+            <div>
+              <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Contact Us</h4>
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Mail size={16} style={{ color: 'var(--accent)' }} />
+                <a
+                  href="mailto:support@campuspulse.com"
+                  onClick={handleEmailClick}
+                  style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  support@campuspulse.com
+                </a>
+              </div>
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Phone size={16} style={{ color: 'var(--accent)' }} />
+                <a
+                  href="tel:+1234567890"
+                  onClick={handlePhoneClick}
+                  style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  +1 (234) 567-890
+                </a>
+              </div>
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <MapPinIcon size={16} style={{ color: 'var(--accent)' }} />
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                  123 University Avenue,<br />
+                  Innovation Campus,<br />
+                  Colombo, Sri Lanka
+                </span>
+              </div>
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Globe size={16} style={{ color: 'var(--accent)' }} />
+                <a
+                  href="https://campuspulse.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  www.campuspulse.com
+                </a>
+              </div>
+            </div>
+
+            {/* Newsletter Column */}
+            <div>
+              <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Stay Updated</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+                Subscribe to our newsletter for updates and insights.
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-primary)',
+                    fontSize: 13,
+                    outline: 'none'
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                />
+                <button
+                  style={{
+                    padding: '10px 16px',
+                    background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                    border: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500
+                  }}
+                >
+                  Subscribe
+                </button>
+              </div>
+            </div>
           </div>
-          <p style={{ margin: 0 }}>&copy; 2026 CampusPulse. All rights reserved.</p>
+
+          {/* Footer Bottom Bar */}
+          <div style={{
+            paddingTop: 24,
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 16
+          }}>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12 }}>
+              &copy; 2026 CampusPulse. All rights reserved.
+            </p>
+            <div style={{ display: 'flex', gap: 20 }}>
+              <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 12, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Privacy Policy</a>
+              <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 12, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Terms of Service</a>
+              <a href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 12, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>Cookie Policy</a>
+            </div>
+          </div>
         </div>
       </footer>
 
