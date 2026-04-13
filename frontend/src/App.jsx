@@ -14,10 +14,11 @@ import UserDashboard from './pages/Dashboards/UserDashboard'
 import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
+import TicketsPage from './pages/Tickets/TicketsPage'
 
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, TicketsPage, AdminUsersPage,
+  ResourcesPage, BookingsPage, AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -84,6 +85,9 @@ export default function App() {
               <ProtectedRoute><BookingsPage /></ProtectedRoute>
             } />
             <Route path="/tickets" element={
+              <ProtectedRoute><TicketsPage /></ProtectedRoute>
+            } />
+            <Route path="/tickets/new" element={
               <ProtectedRoute><TicketsPage /></ProtectedRoute>
             } />
             <Route path="/admin/users" element={
