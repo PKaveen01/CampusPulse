@@ -83,7 +83,7 @@ public class SecurityConfig {
 
                         // Tickets endpoints
                         .requestMatchers(HttpMethod.POST, "/api/tickets/**").authenticated()
-                        .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "ADMIN")
+                        .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "MANAGER", "ADMIN")
                         .requestMatchers("/api/tickets/*/assign").hasRole("ADMIN")
 
                         // All other requests require authentication
