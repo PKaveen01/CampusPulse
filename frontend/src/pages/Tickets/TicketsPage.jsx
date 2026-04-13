@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, Clock3, ImagePlus, Plus, Wrench } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar'
+import { resourceService } from '../../services/resourceService'
 import { ticketService } from '../../services/ticketService'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
@@ -75,6 +76,8 @@ export default function TicketsPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
+  const [resources, setResources] = useState([])
+  const [resourcesLoading, setResourcesLoading] = useState(true)
 
   const [form, setForm] = useState({
     resourceId: '',
@@ -92,7 +95,20 @@ export default function TicketsPage() {
 
   useEffect(() => {
     fetchTickets()
+    fetchResources()
   }, [])
+
+  async function fetchResources() {
+    setResourcesLoading(true)
+    try {
+      const data = await resourceService.getResources()
+      setResources(data)
+    } catch {
+      setResources([])
+    } finally {
+      setResourcesLoading(false)
+    }
+  }
 
   async function fetchTickets() {
     setLoading(true)
@@ -287,15 +303,22 @@ export default function TicketsPage() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                <input
+                <select
                   name="resourceId"
-                  type="number"
-                  min="1"
-                  placeholder="Resource ID (optional)"
                   value={form.resourceId}
                   onChange={onFieldChange}
-                  style={inputStyle}
-                />
+                  style={{ ...inputStyle, color: 'var(--text-primary)', background: '#1a2438' }}
+                  disabled={resourcesLoading}
+                >
+                  <option value="" style={{ color: '#0f172a', background: '#ffffff' }}>
+                    {resourcesLoading ? 'Loading resources...' : 'No specific resource'}
+                  </option>
+                  {resources.map(resource => (
+                    <option key={resource.id} value={String(resource.id)} style={{ color: '#0f172a', background: '#ffffff' }}>
+                      #{resource.id} - {resource.name}
+                    </option>
+                  ))}
+                </select>
                 <input
                   name="location"
                   placeholder="Location (example: Room 301)"

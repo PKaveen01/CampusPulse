@@ -3,6 +3,7 @@ package com.smartcampus.modules.ticket.service;
 import com.smartcampus.modules.auth.entity.User;
 import com.smartcampus.modules.auth.repository.UserRepository;
 import com.smartcampus.modules.auth.security.CustomUserDetails;
+import com.smartcampus.modules.resource.repository.ResourceRepository;
 import com.smartcampus.modules.ticket.dto.TicketDTO;
 import com.smartcampus.modules.ticket.entity.Ticket;
 import com.smartcampus.modules.ticket.entity.TicketAttachment;
@@ -38,6 +39,7 @@ public class TicketService {
 	private final TicketAttachmentRepository ticketAttachmentRepository;
 	private final TicketCommentRepository ticketCommentRepository;
 	private final UserRepository userRepository;
+	private final ResourceRepository resourceRepository;
 
 	@Value("${file.upload-dir:./uploads}")
 	private String uploadDir;
@@ -55,10 +57,15 @@ public class TicketService {
 			throw new RuntimeException("A ticket can include up to 3 image attachments");
 		}
 
+		Long safeResourceId = request.getResourceId();
+		if (safeResourceId != null && !resourceRepository.existsById(safeResourceId)) {
+			safeResourceId = null;
+		}
+
 		Ticket ticket = Ticket.builder()
 				.ticketNumber(generateTicketNumber())
 				.userId(currentUser.getId())
-				.resourceId(request.getResourceId())
+				.resourceId(safeResourceId)
 				.location(trimToNull(request.getLocation()))
 				.category(request.getCategory().trim())
 				.priority(request.getPriority())

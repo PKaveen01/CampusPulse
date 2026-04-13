@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 public class Resource {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true, length = 100) private String name;
-    private String resourceType;
+    @Column(name = "resource_type_id")
+    private Long resourceTypeId;
     private Integer capacity;
     private String location;
     @Column(length = 20) private String status;

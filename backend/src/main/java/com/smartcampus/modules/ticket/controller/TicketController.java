@@ -7,6 +7,7 @@ import com.smartcampus.modules.ticket.entity.Ticket;
 import com.smartcampus.modules.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,14 @@ public class TicketController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponse<TicketDTO.TicketDetails>> createTicket(
             @Valid @ModelAttribute TicketDTO.CreateTicketRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        TicketDTO.TicketDetails ticket = ticketService.createTicket(request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Ticket created", ticket));
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<TicketDTO.TicketDetails>> createTicketJson(
+            @Valid @RequestBody TicketDTO.CreateTicketRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
         TicketDTO.TicketDetails ticket = ticketService.createTicket(request, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Ticket created", ticket));
