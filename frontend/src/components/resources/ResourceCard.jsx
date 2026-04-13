@@ -6,7 +6,16 @@ import {
   ShieldCheck, Sparkles, BadgeCheck, Activity, Layers3, ChevronRight
 } from 'lucide-react';
 
-const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetails, onViewHistory, isAdmin }) => {
+const ResourceCard = ({
+  resource,
+  onEdit,
+  onDelete,
+  onStatusToggle,
+  onViewDetails,
+  onViewHistory,
+  onReportIssue,
+  isAdmin
+}) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -1142,45 +1151,83 @@ const ResourceCard = ({ resource, onEdit, onDelete, onStatusToggle, onViewDetail
             </button>
           </div>
         ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); onViewDetails(resource); }}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '11px 12px',
-              background: resource.status === 'ACTIVE'
-                ? 'linear-gradient(135deg, var(--accent), var(--accent-2))'
-                : 'rgba(255,255,255,0.05)',
-              border: resource.status !== 'ACTIVE' ? '1px solid var(--border)' : 'none',
-              borderRadius: 'var(--radius-sm)',
-              color: resource.status === 'ACTIVE' ? 'white' : 'var(--text-muted)',
-              cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
-              fontSize: 13,
-              fontWeight: 700,
-              transition: 'all 0.2s',
-              boxShadow: resource.status === 'ACTIVE' ? '0 8px 18px rgba(79,142,247,0.24)' : 'none'
-            }}
-            onMouseEnter={e => {
-              if (resource.status === 'ACTIVE') {
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onViewDetails(resource); }}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 12px',
+                background: resource.status === 'ACTIVE'
+                  ? 'linear-gradient(135deg, var(--accent), var(--accent-2))'
+                  : 'rgba(255,255,255,0.05)',
+                border: resource.status !== 'ACTIVE' ? '1px solid var(--border)' : 'none',
+                borderRadius: 'var(--radius-sm)',
+                color: resource.status === 'ACTIVE' ? 'white' : 'var(--text-muted)',
+                cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
+                fontSize: 13,
+                fontWeight: 700,
+                transition: 'all 0.2s',
+                boxShadow: resource.status === 'ACTIVE' ? '0 8px 18px rgba(79,142,247,0.24)' : 'none'
+              }}
+              onMouseEnter={e => {
+                if (resource.status === 'ACTIVE') {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 10px 22px rgba(79,142,247,0.3)';
+                }
+              }}
+              onMouseLeave={e => {
+                if (resource.status === 'ACTIVE') {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 18px rgba(79,142,247,0.24)';
+                }
+              }}
+              disabled={resource.status !== 'ACTIVE'}
+            >
+              <Calendar size={14} />
+              {resource.status === 'ACTIVE' ? 'Book Now' : 'Currently Unavailable'}
+              {resource.status === 'ACTIVE' && <ChevronRight size={14} />}
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onReportIssue) onReportIssue(resource);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 14px',
+                background: 'rgba(248,113,113,0.08)',
+                border: '1px solid rgba(248,113,113,0.22)',
+                borderRadius: 'var(--radius-sm)',
+                color: '#f87171',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 700,
+                transition: 'all 0.2s',
+                minWidth: 130
+              }}
+              onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 10px 22px rgba(79,142,247,0.3)';
-              }
-            }}
-            onMouseLeave={e => {
-              if (resource.status === 'ACTIVE') {
+                e.currentTarget.style.background = 'rgba(248,113,113,0.14)';
+                e.currentTarget.style.borderColor = 'rgba(248,113,113,0.32)';
+              }}
+              onMouseLeave={e => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 18px rgba(79,142,247,0.24)';
-              }
-            }}
-            disabled={resource.status !== 'ACTIVE'}
-          >
-            <Calendar size={14} />
-            {resource.status === 'ACTIVE' ? 'Book Now' : 'Currently Unavailable'}
-            {resource.status === 'ACTIVE' && <ChevronRight size={14} />}
-          </button>
+                e.currentTarget.style.background = 'rgba(248,113,113,0.08)';
+                e.currentTarget.style.borderColor = 'rgba(248,113,113,0.22)';
+              }}
+            >
+              <AlertTriangle size={14} />
+              Report Issue
+            </button>
+          </div>
         )}
       </div>
 
