@@ -9,15 +9,25 @@ import LoginPage from './pages/Auth/LoginPage'
 import SignupPage from './pages/Auth/SignupPage'
 import OAuth2RedirectPage from './pages/Auth/OAuth2RedirectPage'
 
+// Home Page
+import HomePage from './pages/HomePage'
+
 // Dashboards
 import UserDashboard from './pages/Dashboards/UserDashboard'
 import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
 
+// ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
+import ResourceList from './pages/Resources/ResourceList'
+import ResourceAnalytics from './components/resources/ResourceAnalytics'
+import ResourceDetails from './pages/Resources/ResourceDetails'
+
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, TicketsPage, AdminUsersPage,
+  BookingsPage, 
+  TicketsPage, 
+  AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -41,15 +51,15 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <Routes>
-            {/* Public */}
+            {/* Public - Home Page (Root Route) */}
+            <Route path="/" element={<HomePage />} />
+            
+            {/* Auth pages */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/oauth2/redirect" element={<OAuth2RedirectPage />} />
 
-            {/* Root redirect */}
-            <Route path="/" element={
-              <ProtectedRoute><DashboardRedirect /></ProtectedRoute>
-            } />
+            {/* Dashboard redirect */}
             <Route path="/dashboard" element={
               <ProtectedRoute><DashboardRedirect /></ProtectedRoute>
             } />
@@ -76,16 +86,40 @@ export default function App() {
               </ProtectedRoute>
             } />
 
-            {/* Module pages (stubs — other members fill these in) */}
-            <Route path="/resources" element={
-              <ProtectedRoute><ResourcesPage /></ProtectedRoute>
+            {/* ========== MODULE PAGES - ORDER MATTERS! ========== */}
+            
+            {/* Member 1 - Resource Analytics (most specific - MUST BE FIRST) */}
+            <Route path="/resources/analytics" element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}>
+                <ResourceAnalytics onClose={() => {}} />
+              </ProtectedRoute>
             } />
+            
+            {/* Member 1 - Resource Details by ID (specific - must come before /resources) */}
+            <Route path="/resources/:id" element={
+              <ProtectedRoute>
+                <ResourceDetails />
+              </ProtectedRoute>
+            } />
+            
+            {/* Member 1 - Resources List (general - must be LAST) */}
+            <Route path="/resources" element={
+              <ProtectedRoute>
+                <ResourceList />
+              </ProtectedRoute>
+            } />
+            
+            {/* Member 2 - Bookings Module (stub) */}
             <Route path="/bookings" element={
               <ProtectedRoute><BookingsPage /></ProtectedRoute>
             } />
+            
+            {/* Member 3 - Tickets Module (stub) */}
             <Route path="/tickets" element={
               <ProtectedRoute><TicketsPage /></ProtectedRoute>
             } />
+            
+            {/* Admin Users Management */}
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>
             } />

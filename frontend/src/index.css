@@ -69,3 +69,79 @@ input, textarea, select, button { font-family: inherit; font-size: inherit; }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; }
+
+/* Fix for dropdown options in dark theme */
+select {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+select option:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* For better visibility in dark theme */
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,142,247,0.2);
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+:root {
+  --shadow-glow: 0 0 30px rgba(79, 142, 247, 0.2);
+  --radius-sm: 6px;
+  --radius: 12px;
+}
+/* Map Building Pulse Animation */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+.building-marker {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Map Tooltip */
+.map-tooltip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
