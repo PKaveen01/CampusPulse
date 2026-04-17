@@ -57,6 +57,8 @@ public class AuthDTOs {
         private String avatarUrl;
         private String role;
         private Boolean isActive;
+        // Auth provider ("LOCAL" for email/password, "GOOGLE" for OAuth2)
+        private String provider;
         // Extended profile fields
         private String phone;
         private String department;
@@ -72,6 +74,7 @@ public class AuthDTOs {
             dto.setAvatarUrl(user.getAvatarUrl());
             dto.setRole(user.getRole().name());
             dto.setIsActive(user.getIsActive());
+            dto.setProvider(user.getProvider());   // ← fix: was missing
             dto.setPhone(user.getPhone());
             dto.setDepartment(user.getDepartment());
             dto.setBio(user.getBio());

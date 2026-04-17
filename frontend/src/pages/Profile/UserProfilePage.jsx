@@ -520,12 +520,12 @@ export default function UserProfilePage() {
               Change Password
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
-              {displayProfile?.provider === 'LOCAL'
-                ? 'Update your password. You will stay logged in.'
-                : 'Password changes are only available for email/password accounts. Your account uses Google login.'}
+              {displayProfile?.provider === 'GOOGLE'
+                ? 'Password changes are not available for Google accounts. Your account is secured by Google OAuth2.'
+                : 'Update your password. You will stay logged in.'}
             </p>
 
-            {displayProfile?.provider !== 'LOCAL' ? (
+            {displayProfile?.provider === 'GOOGLE' ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '16px 20px', borderRadius: 12,
