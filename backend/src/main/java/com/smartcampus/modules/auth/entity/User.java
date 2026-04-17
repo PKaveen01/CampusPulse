@@ -54,6 +54,16 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ── Profile fields (added for user profile feature) ──
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+    @Column(name = "department", length = 100)
+    private String department;
+
+    @Column(name = "bio", length = 500)
+    private String bio;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
