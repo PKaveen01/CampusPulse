@@ -26,13 +26,10 @@ import ResourceDetails from './pages/Resources/ResourceDetails'
 
 // ========== MEMBER 4 - USER PROFILE MODULE ==========
 import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
+import UserManagementPage from './pages/Admin/UserManagementPage'
 
 // Stub pages (other members)
-import {
-  BookingsPage,
-  TicketsPage,
-  AdminUsersPage,
-} from './pages/Stubs'
+import { BookingsPage, TicketsPage } from './pages/Stubs'
 
 // Smart redirect based on role
 import { useAuth } from './context/AuthContext'
@@ -137,7 +134,7 @@ export default function App() {
 
               {/* Admin Users Management */}
               <Route path="/admin/users" element={
-                <ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADMIN']}><UserManagementPage /></ProtectedRoute>
               } />
 
               {/* Fallback */}
