@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Building2, Users, MapPin,
     Wifi, Wind, Tv, Plug, Smartphone,
-    Printer, ShieldCheck, Info, Layers3, Sparkles, CheckCircle, AlertTriangle
+    Printer, ShieldCheck, Info, Layers3, Sparkles, CheckCircle, AlertTriangle, Calendar
 } from 'lucide-react';
 import resourceService from '../../services/resourceService';
 
@@ -30,12 +30,17 @@ const ResourceDetails = () => {
         }
     };
 
+    const handleBookNow = () => {
+        navigate(`/bookings/new?resourceId=${resource.id}`);
+    };
+
     const getStatusStyles = (status) => {
         if (status === 'ACTIVE') {
             return {
-                bg: 'rgba(52,211,153,0.18)',
+                bg: 'rgba(52,211,153,0.14)',
                 color: '#34d399',
-                border: 'rgba(52,211,153,0.28)',
+                border: 'rgba(52,211,153,0.24)',
+                accent: '#34d399',
                 label: 'Operational',
                 icon: <CheckCircle size={13} />
             };
@@ -43,18 +48,20 @@ const ResourceDetails = () => {
 
         if (status === 'MAINTENANCE') {
             return {
-                bg: 'rgba(251,191,36,0.18)',
+                bg: 'rgba(251,191,36,0.14)',
                 color: '#fbbf24',
-                border: 'rgba(251,191,36,0.28)',
+                border: 'rgba(251,191,36,0.24)',
+                accent: '#fbbf24',
                 label: 'Under Maintenance',
                 icon: <AlertTriangle size={13} />
             };
         }
 
         return {
-            bg: 'rgba(248,113,113,0.18)',
+            bg: 'rgba(248,113,113,0.14)',
             color: '#f87171',
-            border: 'rgba(248,113,113,0.28)',
+            border: 'rgba(248,113,113,0.24)',
+            accent: '#f87171',
             label: 'Unavailable',
             icon: <AlertTriangle size={13} />
         };
@@ -148,8 +155,8 @@ const ResourceDetails = () => {
                         onClick={() => navigate('/resources')}
                         style={{
                             padding: '10px 18px',
-                            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                            border: 'none',
+                            background: '#334155',
+                            border: '1px solid #475569',
                             borderRadius: 'var(--radius-sm)',
                             color: 'white',
                             cursor: 'pointer',
@@ -174,36 +181,108 @@ const ResourceDetails = () => {
             padding: '32px 24px 48px',
             background: 'var(--bg-primary)'
         }}>
-            {/* Back Button */}
-            <button
-                onClick={() => navigate('/resources')}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '10px 16px',
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    marginBottom: 24,
-                    fontWeight: 600,
-                    transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                    e.currentTarget.style.color = 'var(--accent)';
-                    e.currentTarget.style.background = 'rgba(79,142,247,0.06)';
-                }}
-                onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                    e.currentTarget.style.background = 'var(--bg-card)';
-                }}
-            >
-                <ArrowLeft size={16} /> Back to Resources
-            </button>
+            {/* Top Action Bar */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+                marginBottom: 24
+            }}>
+                <button
+                    onClick={() => navigate('/resources')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '10px 16px',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-sm)',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--accent)';
+                        e.currentTarget.style.color = 'var(--accent)';
+                        e.currentTarget.style.background = 'rgba(79,142,247,0.06)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        e.currentTarget.style.background = 'var(--bg-card)';
+                    }}
+                >
+                    <ArrowLeft size={16} /> Back to Resources
+                </button>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                        onClick={() => window.print()}
+                        style={{
+                            padding: '10px 16px',
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-sm)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            fontWeight: 600,
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = 'var(--accent)';
+                            e.currentTarget.style.color = 'var(--accent)';
+                            e.currentTarget.style.background = 'rgba(79,142,247,0.06)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                        }}
+                    >
+                        <Printer size={16} /> Print Details
+                    </button>
+
+                    <button
+                        onClick={handleBookNow}
+                        disabled={resource.status !== 'ACTIVE'}
+                        style={{
+                            padding: '10px 18px',
+                            background: resource.status === 'ACTIVE' ? '#334155' : '#2a2a3a',
+                            border: resource.status === 'ACTIVE' ? '1px solid #475569' : '1px solid #3a3a4a',
+                            borderRadius: 'var(--radius-sm)',
+                            color: resource.status === 'ACTIVE' ? 'white' : '#a0a0b0',
+                            cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            fontWeight: 700,
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => {
+                            if (resource.status === 'ACTIVE') {
+                                e.currentTarget.style.background = '#3f4d63';
+                            }
+                        }}
+                        onMouseLeave={e => {
+                            if (resource.status === 'ACTIVE') {
+                                e.currentTarget.style.background = '#334155';
+                            }
+                        }}
+                    >
+                        <Calendar size={16} />
+                        {resource.status === 'ACTIVE' ? 'Book Now' : 'Currently Unavailable'}
+                    </button>
+                </div>
+            </div>
 
             {/* Resource Details */}
             <div style={{
@@ -211,12 +290,24 @@ const ResourceDetails = () => {
                 borderRadius: 'var(--radius)',
                 border: '1px solid var(--border)',
                 overflow: 'hidden',
-                boxShadow: '0 20px 46px rgba(0,0,0,0.14)'
+                boxShadow: '0 20px 46px rgba(0,0,0,0.14)',
+                position: 'relative'
             }}>
+                {/* Left Accent */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    width: '4px',
+                    background: statusStyles.accent,
+                    zIndex: 2
+                }} />
+
                 {/* Header Image */}
                 <div style={{
                     height: 340,
-                    background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                    background: '#2a2a3a',
                     position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
@@ -231,13 +322,23 @@ const ResourceDetails = () => {
                             onError={() => setImageError(true)}
                         />
                     ) : (
-                        <Building2 size={88} style={{ color: 'white', opacity: 0.5 }} />
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            color: '#cbd5e1'
+                        }}>
+                            <Building2 size={88} style={{ opacity: 0.45 }} />
+                            <span style={{ fontSize: 12, opacity: 0.8 }}>No preview available</span>
+                        </div>
                     )}
 
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.76), rgba(0,0,0,0.18), transparent)'
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0.22), transparent)'
                     }} />
 
                     <div style={{
@@ -626,6 +727,39 @@ const ResourceDetails = () => {
                                 {/* Action Buttons */}
                                 <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                                     <button
+                                        onClick={handleBookNow}
+                                        disabled={resource.status !== 'ACTIVE'}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            background: resource.status === 'ACTIVE' ? '#334155' : '#2a2a3a',
+                                            border: resource.status === 'ACTIVE' ? '1px solid #475569' : '1px solid #3a3a4a',
+                                            borderRadius: 'var(--radius-sm)',
+                                            color: resource.status === 'ACTIVE' ? 'white' : '#a0a0b0',
+                                            cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 8,
+                                            fontWeight: 700,
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={e => {
+                                            if (resource.status === 'ACTIVE') {
+                                                e.currentTarget.style.background = '#3f4d63';
+                                            }
+                                        }}
+                                        onMouseLeave={e => {
+                                            if (resource.status === 'ACTIVE') {
+                                                e.currentTarget.style.background = '#334155';
+                                            }
+                                        }}
+                                    >
+                                        <Calendar size={16} />
+                                        {resource.status === 'ACTIVE' ? 'Book Now' : 'Unavailable for Booking'}
+                                    </button>
+
+                                    <button
                                         onClick={() => window.print()}
                                         style={{
                                             flex: 1,
@@ -680,7 +814,7 @@ const ResourceDetails = () => {
 
                                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                                     This resource is currently marked as <strong style={{ color: statusStyles.color }}>{resource.status}</strong>.
-                                    {resource.status === 'ACTIVE' && ' It is available for normal operational use.'}
+                                    {resource.status === 'ACTIVE' && ' It is available for normal operational use and booking.'}
                                     {resource.status === 'MAINTENANCE' && ' It may be temporarily unavailable while service work is being carried out.'}
                                     {resource.status !== 'ACTIVE' && resource.status !== 'MAINTENANCE' && ' Access or usage may be restricted at the moment.'}
                                 </div>
