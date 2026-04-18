@@ -24,20 +24,17 @@ const NAV_LINKS = {
   ],
   TECHNICIAN: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/tickets', label: 'Tickets', icon: Wrench },
     { to: '/resources', label: 'Resources', icon: Building2 },
   ],
   MANAGER: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/bookings', label: 'Bookings', icon: BookOpen },
     { to: '/resources', label: 'Resources', icon: Building2 },
-    { to: '/tickets', label: 'Tickets', icon: Wrench },
   ],
   ADMIN: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/resources', label: 'Resources', icon: Building2 },
     { to: '/bookings', label: 'Bookings', icon: BookOpen },
-    { to: '/tickets', label: 'Tickets', icon: Wrench },
     { to: '/admin/users', label: 'Users', icon: Users },
   ],
 }
