@@ -67,6 +67,11 @@ const resourceService = {
         return response.data;
     },
 
+    getResources: async (page = 0, size = 1000, sort = 'createdAt,desc') => {
+        const response = await resourceService.getAllResources(page, size, sort);
+        return response.content ?? [];
+    },
+
     createResource: async (data) => {
         console.log('Sending to backend:', data);
         const payload = {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, Clock3, ImagePlus, Plus, Wrench } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar'
-import { resourceService } from '../../services/resourceService'
+import resourceService from '../../services/resourceService'
 import { ticketService } from '../../services/ticketService'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
