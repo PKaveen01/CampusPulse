@@ -81,7 +81,7 @@ export default function LoginPage() {
             boxShadow: '0 8px 24px rgba(79,142,247,0.4)',
           }}>S</div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 6 }}>
-            Welcome back Brother
+            Welcome back
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
             Sign in to Smart Campus Hub
