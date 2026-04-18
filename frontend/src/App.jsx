@@ -18,6 +18,8 @@ import UserDashboard from './pages/Dashboards/UserDashboard'
 import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
+import TicketsPage from './pages/Tickets/TicketsPage'
+import TicketSolvePage from './pages/Tickets/TicketSolvePage'
 
 // ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
 import ResourceList from './pages/Resources/ResourceList'
@@ -29,7 +31,9 @@ import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
 import UserManagementPage from './pages/Admin/UserManagementPage'
 
 // Stub pages (other members)
-import { BookingsPage, TicketsPage } from './pages/Stubs'
+import {
+  ResourcesPage, BookingsPage, AdminUsersPage,
+} from './pages/Stubs'
 
 // Smart redirect based on role
 import { useAuth } from './context/AuthContext'
@@ -130,6 +134,12 @@ export default function App() {
               {/* Member 3 - Tickets Module (stub) */}
               <Route path="/tickets" element={
                 <ProtectedRoute><TicketsPage /></ProtectedRoute>
+              } />
+              <Route path="/tickets/new" element={
+                <ProtectedRoute><TicketsPage /></ProtectedRoute>
+              } />
+              <Route path="/tickets/solve" element={
+                <ProtectedRoute allowedRoles={['MANAGER', 'ADMIN']}><TicketSolvePage /></ProtectedRoute>
               } />
 
               {/* Admin Users Management */}
