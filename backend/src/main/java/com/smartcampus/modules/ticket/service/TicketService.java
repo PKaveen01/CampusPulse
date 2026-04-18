@@ -113,8 +113,8 @@ public class TicketService {
 
 	@Transactional
 	public TicketDTO.TicketDetails assignTicket(Long ticketId, Long assigneeUserId, CustomUserDetails currentUser) {
-		if (!isAdmin(currentUser)) {
-			throw new RuntimeException("Only admin can assign tickets");
+		if (!isAdminOrManager(currentUser)) {
+			throw new RuntimeException("Only admin or manager can assign tickets");
 		}
 
 		Ticket ticket = getTicketEntityById(ticketId);
@@ -130,8 +130,23 @@ public class TicketService {
 		}
 
 		ticket.setAssignedTo(assigneeUserId);
+		if (ticket.getStatus() == Ticket.Status.OPEN) {
+			ticket.setStatus(Ticket.Status.IN_PROGRESS);
+		}
 		ticketRepository.save(ticket);
 		return getTicketById(ticketId, currentUser);
+	}
+
+	public List<TicketDTO.AssignableStaffDTO> getAssignableStaff(CustomUserDetails currentUser) {
+		if (!isAdminOrManager(currentUser)) {
+			throw new RuntimeException("Only admin or manager can view assignable staff");
+		}
+
+		return userRepository.findAll().stream()
+				.filter(user -> user.getRole() == User.Role.TECHNICIAN)
+				.filter(user -> !Boolean.FALSE.equals(user.getIsActive()))
+				.map(TicketDTO.AssignableStaffDTO::fromUser)
+				.toList();
 	}
 
 	@Transactional
@@ -334,10 +349,6 @@ public class TicketService {
 	}
 
 	private void validateStatusChangePermission(Ticket ticket, Ticket.Status newStatus, CustomUserDetails currentUser) {
-		if (newStatus == Ticket.Status.REJECTED && !isAdmin(currentUser)) {
-			throw new RuntimeException("Only admin can reject tickets");
-		}
-
 		if (isAdmin(currentUser)) {
 			return;
 		}

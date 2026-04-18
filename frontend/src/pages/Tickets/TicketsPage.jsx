@@ -1,73 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, Clock3, ImagePlus, Plus, Wrench } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Plus } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar'
 import resourceService from '../../services/resourceService'
 import { ticketService } from '../../services/ticketService'
-
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
-const CATEGORIES = [
-  'ELECTRICAL',
-  'NETWORK',
-  'HARDWARE',
-  'SOFTWARE',
-  'PROJECTOR',
-  'AIR_CONDITIONING',
-  'PLUMBING',
-  'CLEANING',
-  'SECURITY',
-  'OTHER',
-]
-const MAX_FILES = 3
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
-
-const STATUS_COLOR = {
-  OPEN: 'var(--info)',
-  IN_PROGRESS: 'var(--warning)',
-  RESOLVED: 'var(--success)',
-  CLOSED: 'var(--accent)',
-  REJECTED: 'var(--danger)',
-}
-
-function StatusPill({ status }) {
-  const color = STATUS_COLOR[status] ?? 'var(--text-secondary)'
-  return (
-    <span
-      style={{
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: '0.06em',
-        padding: '4px 10px',
-        borderRadius: 999,
-        color,
-        border: `1px solid ${color}55`,
-        background: `${color}14`,
-      }}
-    >
-      {status?.replace('_', ' ') ?? 'UNKNOWN'}
-    </span>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div
-      style={{
-        padding: 28,
-        borderRadius: 14,
-        border: '1px dashed var(--border)',
-        textAlign: 'center',
-        color: 'var(--text-secondary)',
-      }}
-    >
-      <Wrench size={18} style={{ margin: '0 auto 8px auto', color: 'var(--warning)' }} />
-      <p style={{ marginBottom: 4, color: 'var(--text-primary)', fontWeight: 600 }}>No tickets yet</p>
-      <p style={{ fontSize: 13 }}>Create your first incident ticket to report an issue.</p>
-    </div>
-  )
-}
+import { useAuth } from '../../context/AuthContext'
+import TicketCreateForm from './components/TicketCreateForm'
+import TicketList from './components/TicketList'
+import TicketDetailsPanel from './components/TicketDetailsPanel'
+import { MAX_FILES, ACCEPTED_IMAGE_TYPES } from './ticketConstants'
 
 export default function TicketsPage() {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -78,6 +22,10 @@ export default function TicketsPage() {
   const [message, setMessage] = useState('')
   const [resources, setResources] = useState([])
   const [resourcesLoading, setResourcesLoading] = useState(true)
+  const [selectedTicket, setSelectedTicket] = useState(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [replySubmitting, setReplySubmitting] = useState(false)
 
   const [form, setForm] = useState({
     resourceId: '',
@@ -196,6 +144,39 @@ export default function TicketsPage() {
     }
   }
 
+  async function handleViewDetails(ticketId) {
+    setDetailsLoading(true)
+    setError('')
+    try {
+      const data = await ticketService.getTicketById(ticketId)
+      setSelectedTicket(data)
+      setReplyText('')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load ticket details')
+    } finally {
+      setDetailsLoading(false)
+    }
+  }
+
+  async function handleReplySubmit(e) {
+    e.preventDefault()
+    if (!selectedTicket?.id || !replyText.trim()) return
+
+    setReplySubmitting(true)
+    setError('')
+    try {
+      await ticketService.addComment(selectedTicket.id, replyText.trim(), false)
+      const updated = await ticketService.getTicketById(selectedTicket.id)
+      setSelectedTicket(updated)
+      setReplyText('')
+      setMessage('Reply sent successfully')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send reply')
+    } finally {
+      setReplySubmitting(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -276,197 +257,35 @@ export default function TicketsPage() {
         )}
 
         {showCreate && (
-          <section
-            style={{
-              marginBottom: 24,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 14,
-              padding: 20,
-            }}
-          >
-            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>Create Incident Ticket</h2>
-            <form onSubmit={handleCreateTicket} style={{ display: 'grid', gap: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                <input
-                  value="Ticket ID (Auto-generated)"
-                  readOnly
-                  aria-label="Ticket ID"
-                  style={{
-                    ...inputStyle,
-                    color: 'var(--text-primary)',
-                    background: 'rgba(255,255,255,0.02)',
-                    cursor: 'not-allowed',
-                    fontWeight: 600,
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                <select
-                  name="resourceId"
-                  value={form.resourceId}
-                  onChange={onFieldChange}
-                  style={{ ...inputStyle, color: 'var(--text-primary)', background: '#1a2438' }}
-                  disabled={resourcesLoading}
-                >
-                  <option value="" style={{ color: '#0f172a', background: '#ffffff' }}>
-                    {resourcesLoading ? 'Loading resources...' : 'No specific resource'}
-                  </option>
-                  {resources.map(resource => (
-                    <option key={resource.id} value={String(resource.id)} style={{ color: '#0f172a', background: '#ffffff' }}>
-                      #{resource.id} - {resource.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  name="location"
-                  placeholder="Location (example: Room 301)"
-                  value={form.location}
-                  onChange={onFieldChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                <select
-                  name="category"
-                  value={form.category}
-                  onChange={onFieldChange}
-                  style={{ ...inputStyle, color: 'var(--text-primary)', background: '#1a2438' }}
-                  required
-                >
-                  {CATEGORIES.map(category => (
-                    <option key={category} value={category} style={{ color: '#0f172a', background: '#ffffff' }}>
-                      {category.replaceAll('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  name="priority"
-                  value={form.priority}
-                  onChange={onFieldChange}
-                  style={{ ...inputStyle, color: 'var(--text-primary)', background: '#1a2438' }}
-                >
-                  {PRIORITIES.map(p => (
-                    <option key={p} value={p} style={{ color: '#0f172a', background: '#ffffff' }}>{p}</option>
-                  ))}
-                </select>
-              </div>
-
-              <textarea
-                name="description"
-                placeholder="Describe the incident in detail"
-                value={form.description}
-                onChange={onFieldChange}
-                rows={4}
-                style={{ ...inputStyle, resize: 'vertical' }}
-                required
-              />
-
-              <input
-                name="preferredContactDetails"
-                placeholder="Preferred contact details (phone/email)"
-                value={form.preferredContactDetails}
-                onChange={onFieldChange}
-                style={inputStyle}
-              />
-
-              <div style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: 14 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--text-secondary)', fontSize: 14 }}>
-                  <ImagePlus size={15} /> Attach up to 3 images (JPG, PNG)
-                </label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  multiple
-                  onChange={onFileChange}
-                />
-                {form.attachments.length > 0 && (
-                  <p style={{ marginTop: 8, color: 'var(--text-secondary)', fontSize: 13 }}>
-                    Selected: {form.attachments.map(f => f.name).join(', ')}
-                  </p>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: 10,
-                    background: submitting
-                      ? 'rgba(251,191,36,0.5)'
-                      : 'linear-gradient(135deg, var(--warning), #f59e0b)',
-                    color: '#1b1408',
-                    fontWeight: 700,
-                  }}
-                >
-                  {submitting ? 'Submitting...' : 'Submit Ticket'}
-                </button>
-              </div>
-            </form>
-          </section>
+          <TicketCreateForm
+            form={form}
+            resources={resources}
+            resourcesLoading={resourcesLoading}
+            submitting={submitting}
+            onFieldChange={onFieldChange}
+            onFileChange={onFileChange}
+            onSubmit={handleCreateTicket}
+          />
         )}
 
-        <section
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
-            padding: 20,
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}>My Ticket List</h2>
-          {loading ? (
-            <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Clock3 size={14} /> Loading tickets...
-            </p>
-          ) : tickets.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {tickets.map(ticket => (
-                <div
-                  key={ticket.id}
-                  style={{
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    padding: 14,
-                    background: 'rgba(255,255,255,0.02)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <strong>{ticket.ticketNumber}</strong>
-                      <StatusPill status={ticket.status} />
-                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Priority: {ticket.priority}</span>
-                    </div>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}
-                    </span>
-                  </div>
-                  <p style={{ color: 'var(--text-primary)', marginBottom: 6 }}>{ticket.description}</p>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Category: {ticket.category} • Location: {ticket.location || 'N/A'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <TicketList loading={loading} tickets={tickets} onViewDetails={handleViewDetails} />
+
+        {(selectedTicket || detailsLoading) && (
+          <TicketDetailsPanel
+            ticket={selectedTicket}
+            loading={detailsLoading}
+            currentUserId={user?.id}
+            replyText={replyText}
+            replySubmitting={replySubmitting}
+            onReplyChange={setReplyText}
+            onReplySubmit={handleReplySubmit}
+            onClose={() => {
+              setSelectedTicket(null)
+              setReplyText('')
+            }}
+          />
+        )}
       </main>
     </div>
   )
-}
-
-const inputStyle = {
-  width: '100%',
-  borderRadius: 10,
-  border: '1px solid var(--border)',
-  background: 'rgba(255,255,255,0.03)',
-  color: 'var(--text-primary)',
-  padding: '10px 12px',
-  outline: 'none',
 }

@@ -3,6 +3,7 @@ package com.smartcampus.modules.ticket.dto;
 import com.smartcampus.modules.ticket.entity.Ticket;
 import com.smartcampus.modules.ticket.entity.TicketAttachment;
 import com.smartcampus.modules.ticket.entity.TicketComment;
+import com.smartcampus.modules.auth.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -55,6 +56,23 @@ public class TicketDTO {
     public static class AssignTicketRequest {
         @NotNull(message = "Assignee user id is required")
         private Long assigneeUserId;
+    }
+
+    @Data
+    public static class AssignableStaffDTO {
+        private Long id;
+        private String name;
+        private String email;
+        private String role;
+
+        public static AssignableStaffDTO fromUser(User user) {
+            AssignableStaffDTO dto = new AssignableStaffDTO();
+            dto.setId(user.getId());
+            dto.setName(user.getName());
+            dto.setEmail(user.getEmail());
+            dto.setRole(user.getRole().name());
+            return dto;
+        }
     }
 
     @Data

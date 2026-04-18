@@ -30,6 +30,13 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success("Tickets fetched", tickets));
     }
 
+    @GetMapping("/assignable-staff")
+    public ResponseEntity<ApiResponse<List<TicketDTO.AssignableStaffDTO>>> getAssignableStaff(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        List<TicketDTO.AssignableStaffDTO> staff = ticketService.getAssignableStaff(currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Assignable staff fetched", staff));
+    }
+
     @GetMapping("/{ticketId}")
     public ResponseEntity<ApiResponse<TicketDTO.TicketDetails>> getTicketById(
             @PathVariable Long ticketId,

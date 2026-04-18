@@ -19,6 +19,7 @@ import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
 import TicketsPage from './pages/Tickets/TicketsPage'
+import TicketSolvePage from './pages/Tickets/TicketSolvePage'
 
 // ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
 import ResourceList from './pages/Resources/ResourceList'
@@ -133,6 +134,12 @@ export default function App() {
               {/* Member 3 - Tickets Module (stub) */}
               <Route path="/tickets" element={
                 <ProtectedRoute><TicketsPage /></ProtectedRoute>
+              } />
+              <Route path="/tickets/new" element={
+                <ProtectedRoute><TicketsPage /></ProtectedRoute>
+              } />
+              <Route path="/tickets/solve" element={
+                <ProtectedRoute allowedRoles={['MANAGER', 'ADMIN']}><TicketSolvePage /></ProtectedRoute>
               } />
 
               {/* Admin Users Management */}
