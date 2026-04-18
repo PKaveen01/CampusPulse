@@ -140,4 +140,36 @@ public class UserService {
         user.setRole(User.Role.valueOf(role));
         return AuthDTOs.UserDTO.fromEntity(userRepository.save(user));
     }
+
+    @Transactional
+    public AuthDTOs.UserDTO toggleUserStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setIsActive(!user.getIsActive());
+        return AuthDTOs.UserDTO.fromEntity(userRepository.save(user));
+    }
+
+    public List<AuthDTOs.UserDTO> searchUsers(String query, String role, Boolean isActive) {
+        return userRepository.findAll().stream()
+                .filter(u -> query == null || query.isBlank() ||
+                        u.getName().toLowerCase().contains(query.toLowerCase()) ||
+                        u.getEmail().toLowerCase().contains(query.toLowerCase()))
+                .filter(u -> role == null || role.isBlank() || u.getRole().name().equals(role))
+                .filter(u -> isActive == null || u.getIsActive().equals(isActive))
+                .map(AuthDTOs.UserDTO::fromEntity)
+                .toList();
+    }
+
+    public java.util.Map<String, Long> getUserStats() {
+        List<User> all = userRepository.findAll();
+        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+        stats.put("total",       (long) all.size());
+        stats.put("active",      all.stream().filter(u -> Boolean.TRUE.equals(u.getIsActive())).count());
+        stats.put("inactive",    all.stream().filter(u -> !Boolean.TRUE.equals(u.getIsActive())).count());
+        stats.put("admins",      all.stream().filter(u -> u.getRole() == User.Role.ADMIN).count());
+        stats.put("managers",    all.stream().filter(u -> u.getRole() == User.Role.MANAGER).count());
+        stats.put("technicians", all.stream().filter(u -> u.getRole() == User.Role.TECHNICIAN).count());
+        stats.put("users",       all.stream().filter(u -> u.getRole() == User.Role.USER).count());
+        return stats;
+    }
 }

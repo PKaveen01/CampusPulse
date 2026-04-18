@@ -72,8 +72,7 @@ app.frontend-url=http://localhost:5173
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a project → APIs & Services → Credentials → OAuth 2.0 Client ID
-3. Authorised redirect URI: `http://localhost:8080/oauth2/callback/google`
-4. Authorised redirect URI: `http://localhost:8080/login/oauth2/code/google`
+3. Authorised redirect URI: `http://localhost:8080/login/oauth2/code/google`
 5. Paste Client ID and Secret into `application.properties`
 
 ---

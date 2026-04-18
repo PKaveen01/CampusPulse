@@ -66,9 +66,19 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // ── Static file serving for avatars ──
+                        .requestMatchers("/uploads/**").permitAll()
+
                         // Admin-only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/technician/**").hasAnyRole("TECHNICIAN", "ADMIN")
+
+                        // ── Profile endpoints (authenticated users) ──
+                        .requestMatchers(HttpMethod.GET,    "/api/profile").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/profile").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/api/profile/avatar").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/profile/avatar").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/profile/password").authenticated()
 
                         // Resources endpoints
                         .requestMatchers(HttpMethod.GET, "/api/resources/**").authenticated()
