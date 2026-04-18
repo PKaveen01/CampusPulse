@@ -35,7 +35,16 @@ const ResourceCard = ({
   const fetchTimeSlots = async (date) => {
     setLoadingSlots(true);
     try {
-      const response = await fetch(`/api/resources/${resource.id}/available-slots?date=${date}`);
+      const response = await fetch(`/api/resources/${resource.id}/available-slots?date=${date}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch slots: ${response.status}`);
+      }
+
       const data = await response.json();
       setTimeSlots(data.availableSlots || []);
     } catch (error) {

@@ -159,25 +159,29 @@ const ResourceList = () => {
 
     const handleCreate = async (formData) => {
         try {
-            await resourceService.createResource(formData);
+            const createdResource = await resourceService.createResource(formData);
             setShowForm(false);
-            fetchResources(0);
+            await fetchResources(0);
             showToast('Resource created successfully!', 'success');
+            return createdResource;
         } catch (error) {
             console.error('Create failed:', error);
             showToast(error.response?.data?.message || 'Failed to create resource', 'error');
+            throw error;
         }
     };
 
     const handleUpdate = async (formData) => {
         try {
-            await resourceService.updateResource(editingResource.id, formData);
+            const updatedResource = await resourceService.updateResource(editingResource.id, formData);
             setEditingResource(null);
-            fetchResources(pagination.page);
+            await fetchResources(pagination.page);
             showToast('Resource updated successfully!', 'success');
+            return updatedResource;
         } catch (error) {
             console.error('Update failed:', error);
             showToast('Failed to update resource', 'error');
+            throw error;
         }
     };
 
@@ -257,7 +261,6 @@ const ResourceList = () => {
         fetchResourceTypes();
     }, [fetchResources]);
 
-    // Generate skeleton loaders
     const skeletonCount = Math.min(6, pagination.size);
 
     return (
@@ -420,7 +423,6 @@ const ResourceList = () => {
                         </div>
 
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                            {/* Campus Map Button */}
                             <button
                                 onClick={handleOpenCampusMap}
                                 style={{
@@ -449,7 +451,6 @@ const ResourceList = () => {
                                 <MapPin size={16} /> Campus Map
                             </button>
 
-                            {/* Export Button */}
                             {resources.length > 0 && (
                                 <button
                                     onClick={exportToCSV}
@@ -480,7 +481,6 @@ const ResourceList = () => {
                                 </button>
                             )}
 
-                            {/* Analytics Button */}
                             {isAdmin && (
                                 <button
                                     onClick={handleAnalytics}
@@ -511,7 +511,6 @@ const ResourceList = () => {
                                 </button>
                             )}
 
-                            {/* Refresh Button */}
                             <button
                                 onClick={() => fetchResources(pagination.page)}
                                 disabled={loading}
@@ -535,7 +534,6 @@ const ResourceList = () => {
                                 Refresh
                             </button>
 
-                            {/* Add Resource Button */}
                             {isAdmin && (
                                 <button
                                     onClick={() => setShowForm(true)}
@@ -569,7 +567,6 @@ const ResourceList = () => {
                         </div>
                     </div>
 
-                    {/* Stats Summary Bar */}
                     {!loading && resources.length > 0 && (
                         <div style={{
                             display: 'flex',
@@ -606,14 +603,12 @@ const ResourceList = () => {
                     )}
                 </div>
 
-                {/* Search Component */}
                 <ResourceSearch
                     onSearch={handleSearch}
                     onClear={handleClearSearch}
                     resourceTypes={resourceTypes}
                 />
 
-                {/* Loading State with Skeletons */}
                 {loading && (
                     <div style={{ marginTop: 24 }}>
                         <div style={{
@@ -628,7 +623,6 @@ const ResourceList = () => {
                     </div>
                 )}
 
-                {/* Empty State */}
                 {!loading && resources.length === 0 && (
                     <div style={{
                         textAlign: 'center',
@@ -668,7 +662,6 @@ const ResourceList = () => {
                     </div>
                 )}
 
-                {/* Resource Grid */}
                 {!loading && resources.length > 0 && (
                     <div style={{
                         display: 'grid',
@@ -690,7 +683,6 @@ const ResourceList = () => {
                     </div>
                 )}
 
-                {/* Pagination */}
                 {!loading && pagination.totalPages > 1 && (
                     <div style={{
                         display: 'flex',
@@ -809,7 +801,6 @@ const ResourceList = () => {
                     </div>
                 )}
 
-                {/* Create/Edit Form Modal */}
                 {showForm && (
                     <ResourceForm
                         onSubmit={handleCreate}
@@ -827,7 +818,6 @@ const ResourceList = () => {
                     />
                 )}
 
-                {/* Campus Map Modal */}
                 {showCampusMap && (
                     <CampusMap
                         onResourceClick={(resource) => {
@@ -838,7 +828,6 @@ const ResourceList = () => {
                     />
                 )}
 
-                {/* Toast Notifications */}
                 {toast && (
                     <Toast
                         message={toast.message}
@@ -847,7 +836,6 @@ const ResourceList = () => {
                     />
                 )}
 
-                {/* Add keyframe animations */}
                 <style>{`
                     @keyframes slideInRight {
                         from {
