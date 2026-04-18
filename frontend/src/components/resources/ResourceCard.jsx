@@ -20,9 +20,9 @@ const ResourceCard = ({
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const statusConfig = {
-    ACTIVE: { color: '#10b981', label: 'Active', bg: '#10b98115' },
-    MAINTENANCE: { color: '#f59e0b', label: 'Maintenance', bg: '#f59e0b15' },
-    OUT_OF_SERVICE: { color: '#ef4444', label: 'Out of Service', bg: '#ef444415' }
+    ACTIVE: { color: '#10b981', label: 'Active', bg: '#10b98115', accent: '#10b981' },
+    MAINTENANCE: { color: '#f59e0b', label: 'Maintenance', bg: '#f59e0b15', accent: '#f59e0b' },
+    OUT_OF_SERVICE: { color: '#ef4444', label: 'Out of Service', bg: '#ef444415', accent: '#ef4444' }
   };
 
   const status = statusConfig[resource.status] || statusConfig.ACTIVE;
@@ -79,23 +79,39 @@ const ResourceCard = ({
         borderRadius: '12px',
         border: `1px solid ${resource.status === 'MAINTENANCE' ? '#f59e0b30' : '#2a2a3a'}`,
         overflow: 'hidden',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        position: 'relative'
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        position: 'relative',
+        boxShadow: '0 6px 16px rgba(0,0,0,0.08)'
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.2)';
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.boxShadow = '0 14px 28px rgba(0,0,0,0.18)';
+        e.currentTarget.style.borderColor = '#3a3a4a';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
+        e.currentTarget.style.borderColor = resource.status === 'MAINTENANCE' ? '#f59e0b30' : '#2a2a3a';
         setShowDropdown(false);
       }}
     >
+      {/* Left Status Accent */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: '3px',
+          background: status.accent,
+          zIndex: 2
+        }}
+      />
+
       {/* Image Section */}
       <div
         style={{
-          height: '140px',
+          height: '148px',
           background: '#2a2a3a',
           position: 'relative',
           cursor: 'pointer'
@@ -113,29 +129,46 @@ const ResourceCard = ({
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: '6px',
               height: '100%',
-              background: '#2a2a3a'
+              background: '#2a2a3a',
+              color: '#8b8ba0'
             }}
           >
-            <Building2 size={32} style={{ opacity: 0.3 }} />
+            <Building2 size={30} style={{ opacity: 0.35 }} />
+            <span style={{ fontSize: '11px', fontWeight: '500', opacity: 0.8 }}>
+              No preview
+            </span>
           </div>
         )}
+
+        {/* Soft Image Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, rgba(14,18,28,0.55), rgba(14,18,28,0.10), transparent)',
+            pointerEvents: 'none'
+          }}
+        />
 
         {/* Status Badge */}
         <div
           style={{
             position: 'absolute',
-            top: '8px',
-            right: '8px',
-            padding: '4px 8px',
-            borderRadius: '6px',
+            top: '10px',
+            right: '10px',
+            padding: '5px 9px',
+            borderRadius: '7px',
             background: status.bg,
             color: status.color,
             fontSize: '11px',
             fontWeight: '600',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(6px)',
+            border: `1px solid ${status.color}25`
           }}
         >
           {status.label}
@@ -143,7 +176,7 @@ const ResourceCard = ({
       </div>
 
       {/* Content */}
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: '18px 16px 16px 16px' }}>
         {/* Title - Clickable */}
         <div
           style={{ cursor: 'pointer' }}
@@ -153,8 +186,9 @@ const ResourceCard = ({
             style={{
               fontSize: '16px',
               fontWeight: '600',
-              margin: '0 0 4px 0',
-              color: '#fff'
+              margin: '0 0 6px 0',
+              color: '#fff',
+              lineHeight: 1.35
             }}
           >
             {resource.name}
@@ -164,21 +198,22 @@ const ResourceCard = ({
             style={{
               display: 'flex',
               gap: '8px',
-              marginBottom: '12px',
+              marginBottom: '14px',
               fontSize: '12px',
-              color: '#a0a0b0',
-              flexWrap: 'wrap'
+              color: '#99a0b3',
+              flexWrap: 'wrap',
+              lineHeight: 1.5
             }}
           >
             <span>{resource.resourceType}</span>
             <span>•</span>
             <span>
-              <Users size={12} style={{ display: 'inline', marginRight: '4px' }} />
+              <Users size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
               {resource.capacity}
             </span>
             <span>•</span>
             <span>
-              <MapPin size={12} style={{ display: 'inline', marginRight: '4px' }} />
+              <MapPin size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
               {resource.location}
             </span>
           </div>
@@ -189,8 +224,8 @@ const ResourceCard = ({
           <div
             style={{
               display: 'flex',
-              gap: '6px',
-              marginBottom: '16px',
+              gap: '8px',
+              marginBottom: '18px',
               flexWrap: 'wrap'
             }}
           >
@@ -198,13 +233,18 @@ const ResourceCard = ({
               <span
                 key={amenity}
                 style={{
-                  padding: '3px 8px',
-                  background: '#2a2a3a',
-                  border: '1px solid #343447',
-                  borderRadius: '5px',
+                  minHeight: '24px',
+                  padding: '4px 10px',
+                  background: '#262638',
+                  border: '1px solid #37374b',
+                  borderRadius: '999px',
                   fontSize: '10px',
-                  color: '#c0c0d0',
-                  fontWeight: '500'
+                  color: '#c7cada',
+                  fontWeight: '500',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  letterSpacing: '0.01em'
                 }}
               >
                 {amenity}
@@ -370,7 +410,7 @@ const ResourceCard = ({
                 {resource.status === 'ACTIVE' ? 'Book Now' : 'Unavailable'}
               </button>
 
-              {/* Check Availability */}
+              {/* Availability */}
               {resource.status === 'ACTIVE' && (
                 <button
                   onClick={(e) => {
@@ -401,7 +441,7 @@ const ResourceCard = ({
                   }}
                 >
                   <Clock size={14} />
-                  Check
+                  Availability
                   {showDropdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
               )}
@@ -444,8 +484,8 @@ const ResourceCard = ({
             {showDropdown && resource.status === 'ACTIVE' && (
               <div
                 style={{
-                  marginTop: '12px',
-                  padding: '12px',
+                  marginTop: '14px',
+                  padding: '14px',
                   background: '#2a2a3a',
                   borderRadius: '8px',
                   border: '1px solid #3a3a4a',
@@ -505,7 +545,7 @@ const ResourceCard = ({
                     </div>
 
                     {loadingSlots ? (
-                      <div style={{ textAlign: 'center', padding: '12px' }}>
+                      <div style={{ textAlign: 'center', padding: '14px' }}>
                         <div
                           style={{
                             width: '20px',
@@ -522,14 +562,22 @@ const ResourceCard = ({
                       <div
                         style={{
                           textAlign: 'center',
-                          padding: '12px',
-                          color: '#a0a0b0',
+                          padding: '16px 12px',
+                          color: '#9aa0b2',
                           fontSize: '11px',
                           background: '#1e1e2f',
-                          borderRadius: '6px'
+                          borderRadius: '6px',
+                          border: '1px solid #343447',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        No available slots
+                        <Clock size={14} style={{ opacity: 0.55 }} />
+                        <span style={{ fontWeight: '600', color: '#b4b9c8' }}>No available slots</span>
+                        <span style={{ fontSize: '10px', color: '#8b91a3' }}>Try another date</span>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -537,12 +585,13 @@ const ResourceCard = ({
                           <span
                             key={idx}
                             style={{
-                              padding: '4px 8px',
+                              padding: '5px 8px',
                               background: '#10b98115',
-                              borderRadius: '4px',
+                              borderRadius: '5px',
                               fontSize: '11px',
                               color: '#10b981',
-                              border: '1px solid #10b98130'
+                              border: '1px solid #10b98130',
+                              fontWeight: '500'
                             }}
                           >
                             {slot.start} - {slot.end}
@@ -551,9 +600,9 @@ const ResourceCard = ({
                         {timeSlots.length > 4 && (
                           <span
                             style={{
-                              padding: '4px 8px',
+                              padding: '5px 8px',
                               background: '#1e1e2f',
-                              borderRadius: '4px',
+                              borderRadius: '5px',
                               fontSize: '11px',
                               color: '#a0a0b0',
                               border: '1px solid #3a3a4a'
