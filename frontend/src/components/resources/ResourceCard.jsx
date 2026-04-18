@@ -80,12 +80,17 @@ const ResourceCard = ({
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
-        setShowDropdown(false); // Close dropdown on mouse leave
+        setShowDropdown(false);
       }}
     >
       {/* Image Section */}
-      <div 
-        style={{ height: '140px', background: '#2a2a3a', position: 'relative', cursor: 'pointer' }}
+      <div
+        style={{
+          height: '140px',
+          background: '#2a2a3a',
+          position: 'relative',
+          cursor: 'pointer'
+        }}
         onClick={() => onViewDetails(resource)}
       >
         {!imageError ? (
@@ -96,30 +101,34 @@ const ResourceCard = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            background: '#2a2a3a'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              background: '#2a2a3a'
+            }}
+          >
             <Building2 size={32} style={{ opacity: 0.3 }} />
           </div>
         )}
-        
+
         {/* Status Badge */}
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          background: status.bg,
-          color: status.color,
-          fontSize: '11px',
-          fontWeight: '600',
-          backdropFilter: 'blur(4px)'
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            background: status.bg,
+            color: status.color,
+            fontSize: '11px',
+            fontWeight: '600',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
           {status.label}
         </div>
       </div>
@@ -127,50 +136,68 @@ const ResourceCard = ({
       {/* Content */}
       <div style={{ padding: '16px' }}>
         {/* Title - Clickable */}
-        <div 
-          style={{ cursor: 'pointer' }} 
+        <div
+          style={{ cursor: 'pointer' }}
           onClick={() => onViewDetails(resource)}
         >
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            margin: '0 0 4px 0',
-            color: '#fff'
-          }}>
+          <h3
+            style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              margin: '0 0 4px 0',
+              color: '#fff'
+            }}
+          >
             {resource.name}
           </h3>
-          
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '12px',
-            fontSize: '12px',
-            color: '#a0a0b0'
-          }}>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '12px',
+              fontSize: '12px',
+              color: '#a0a0b0',
+              flexWrap: 'wrap'
+            }}
+          >
             <span>{resource.resourceType}</span>
             <span>•</span>
-            <span><Users size={12} style={{ display: 'inline', marginRight: '4px' }} />{resource.capacity}</span>
+            <span>
+              <Users size={12} style={{ display: 'inline', marginRight: '4px' }} />
+              {resource.capacity}
+            </span>
             <span>•</span>
-            <span><MapPin size={12} style={{ display: 'inline', marginRight: '4px' }} />{resource.location}</span>
+            <span>
+              <MapPin size={12} style={{ display: 'inline', marginRight: '4px' }} />
+              {resource.location}
+            </span>
           </div>
         </div>
 
         {/* Amenities */}
         {amenities.length > 0 && (
-          <div style={{
-            display: 'flex',
-            gap: '6px',
-            marginBottom: '16px',
-            flexWrap: 'wrap'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              marginBottom: '16px',
+              flexWrap: 'wrap'
+            }}
+          >
             {amenities.map(amenity => (
-              <span key={amenity} style={{
-                padding: '2px 8px',
-                background: '#2a2a3a',
-                borderRadius: '4px',
-                fontSize: '10px',
-                color: '#c0c0d0'
-              }}>
+              <span
+                key={amenity}
+                style={{
+                  padding: '3px 8px',
+                  background: '#2a2a3a',
+                  border: '1px solid #343447',
+                  borderRadius: '5px',
+                  fontSize: '10px',
+                  color: '#c0c0d0',
+                  fontWeight: '500'
+                }}
+              >
                 {amenity}
               </span>
             ))}
@@ -179,59 +206,107 @@ const ResourceCard = ({
 
         {/* Action Buttons */}
         {isAdmin ? (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 44px',
+              gap: '8px',
+              alignItems: 'stretch'
+            }}
+          >
+            {/* Edit */}
             <button
-              onClick={(e) => { e.stopPropagation(); onEdit(resource); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(resource);
+              }}
               style={{
-                flex: 1,
-                padding: '8px',
-                background: '#3b82f6',
-                border: 'none',
+                height: '38px',
+                padding: '0 12px',
+                background: '#334155',
+                border: '1px solid #475569',
                 borderRadius: '6px',
-                color: '#fff',
+                color: '#ffffff',
                 cursor: 'pointer',
                 fontSize: '12px',
-                fontWeight: '500',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '4px'
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#3f4d63';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#334155';
               }}
             >
-              <Edit size={14} /> Edit
+              <Edit size={14} />
+              Edit
             </button>
-            
+
+            {/* Activate / Deactivate */}
             <button
-              onClick={(e) => { e.stopPropagation(); onStatusToggle(resource); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusToggle(resource);
+              }}
               style={{
-                padding: '8px',
-                background: resource.status === 'ACTIVE' ? '#ef4444' : '#10b981',
-                border: 'none',
+                height: '38px',
+                padding: '0 12px',
+                background: '#2a2a3a',
+                border: '1px solid #3a3a4a',
                 borderRadius: '6px',
-                color: '#fff',
+                color: '#d1d5db',
                 cursor: 'pointer',
                 fontSize: '12px',
-                fontWeight: '500',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '4px',
-                minWidth: '90px'
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#313145';
+                e.currentTarget.style.borderColor = resource.status === 'ACTIVE' ? '#ef444460' : '#10b98160';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#2a2a3a';
+                e.currentTarget.style.borderColor = '#3a3a4a';
               }}
             >
               {resource.status === 'ACTIVE' ? <PowerOff size={14} /> : <Power size={14} />}
               {resource.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
             </button>
-            
+
+            {/* Delete */}
             <button
-              onClick={(e) => { e.stopPropagation(); onDelete(resource.id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(resource.id);
+              }}
               style={{
-                padding: '8px',
+                height: '38px',
+                width: '44px',
+                padding: '0',
                 background: '#2a2a3a',
-                border: 'none',
+                border: '1px solid #ef444430',
                 borderRadius: '6px',
                 color: '#ef4444',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#ef444412';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#2a2a3a';
               }}
             >
               <Trash2 size={14} />
@@ -240,23 +315,45 @@ const ResourceCard = ({
         ) : (
           <>
             {/* Main Action Row */}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: resource.status === 'ACTIVE' ? '1.2fr 1fr 44px' : '1fr',
+                gap: '8px',
+                alignItems: 'stretch'
+              }}
+            >
+              {/* Book Now */}
               <button
-                onClick={(e) => { e.stopPropagation(); onViewDetails(resource); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(resource);
+                }}
                 style={{
-                  flex: 1,
-                  padding: '10px',
-                  background: resource.status === 'ACTIVE' ? '#3b82f6' : '#2a2a3a',
-                  border: 'none',
+                  height: '40px',
+                  padding: '0 14px',
+                  background: resource.status === 'ACTIVE' ? '#334155' : '#2a2a3a',
+                  border: resource.status === 'ACTIVE' ? '1px solid #475569' : '1px solid #3a3a4a',
                   borderRadius: '6px',
-                  color: resource.status === 'ACTIVE' ? '#fff' : '#a0a0b0',
+                  color: resource.status === 'ACTIVE' ? '#ffffff' : '#a0a0b0',
                   cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
                   fontSize: '13px',
-                  fontWeight: '500',
+                  fontWeight: '600',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px'
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={e => {
+                  if (resource.status === 'ACTIVE') {
+                    e.currentTarget.style.background = '#3f4d63';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (resource.status === 'ACTIVE') {
+                    e.currentTarget.style.background = '#334155';
+                  }
                 }}
                 disabled={resource.status !== 'ACTIVE'}
               >
@@ -264,25 +361,34 @@ const ResourceCard = ({
                 {resource.status === 'ACTIVE' ? 'Book Now' : 'Unavailable'}
               </button>
 
-              {/* Dropdown Toggle Button */}
+              {/* Check Availability */}
               {resource.status === 'ACTIVE' && (
                 <button
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setShowDropdown(!showDropdown); 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDropdown(!showDropdown);
                   }}
                   style={{
-                    padding: '10px',
+                    height: '40px',
+                    padding: '0 12px',
                     background: '#2a2a3a',
-                    border: 'none',
+                    border: '1px solid #3a3a4a',
                     borderRadius: '6px',
-                    color: '#a0a0b0',
+                    color: '#d1d5db',
                     cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    minWidth: '80px',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#313145';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = '#2a2a3a';
                   }}
                 >
                   <Clock size={14} />
@@ -291,17 +397,32 @@ const ResourceCard = ({
                 </button>
               )}
 
-              {/* Report Issue Button (Icon only) */}
+              {/* Report Issue */}
               {resource.status === 'ACTIVE' && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); onReportIssue?.(resource); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReportIssue?.(resource);
+                  }}
                   style={{
-                    padding: '10px',
-                    background: '#ef444415',
+                    height: '40px',
+                    width: '44px',
+                    padding: '0',
+                    background: '#2a2a3a',
                     border: '1px solid #ef444430',
                     borderRadius: '6px',
                     color: '#ef4444',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#ef444412';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = '#2a2a3a';
                   }}
                   title="Report Issue"
                 >
@@ -312,7 +433,7 @@ const ResourceCard = ({
 
             {/* Dropdown Content - Availability Checker */}
             {showDropdown && resource.status === 'ACTIVE' && (
-              <div 
+              <div
                 style={{
                   marginTop: '12px',
                   padding: '12px',
@@ -323,16 +444,18 @@ const ResourceCard = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <label style={{ 
-                  fontSize: '12px', 
-                  color: '#a0a0b0', 
-                  display: 'block', 
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
+                <label
+                  style={{
+                    fontSize: '12px',
+                    color: '#a0a0b0',
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '500'
+                  }}
+                >
                   Select Date
                 </label>
-                
+
                 <select
                   value={selectedDate}
                   onChange={handleDateChange}
@@ -358,39 +481,45 @@ const ResourceCard = ({
 
                 {selectedDate && (
                   <div>
-                    <div style={{
-                      fontSize: '11px',
-                      color: '#a0a0b0',
-                      marginBottom: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        color: '#a0a0b0',
+                        marginBottom: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
                       <Clock size={12} />
                       Available Slots for {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
 
                     {loadingSlots ? (
                       <div style={{ textAlign: 'center', padding: '12px' }}>
-                        <div style={{
-                          width: '20px',
-                          height: '20px',
-                          border: '2px solid #3a3a4a',
-                          borderTopColor: '#3b82f6',
-                          borderRadius: '50%',
-                          margin: '0 auto',
-                          animation: 'spin 1s linear infinite'
-                        }} />
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            border: '2px solid #3a3a4a',
+                            borderTopColor: '#64748b',
+                            borderRadius: '50%',
+                            margin: '0 auto',
+                            animation: 'spin 1s linear infinite'
+                          }}
+                        />
                       </div>
                     ) : timeSlots.length === 0 ? (
-                      <div style={{
-                        textAlign: 'center',
-                        padding: '12px',
-                        color: '#a0a0b0',
-                        fontSize: '11px',
-                        background: '#1e1e2f',
-                        borderRadius: '6px'
-                      }}>
+                      <div
+                        style={{
+                          textAlign: 'center',
+                          padding: '12px',
+                          color: '#a0a0b0',
+                          fontSize: '11px',
+                          background: '#1e1e2f',
+                          borderRadius: '6px'
+                        }}
+                      >
                         No available slots
                       </div>
                     ) : (
@@ -411,13 +540,16 @@ const ResourceCard = ({
                           </span>
                         ))}
                         {timeSlots.length > 4 && (
-                          <span style={{
-                            padding: '4px 8px',
-                            background: '#2a2a3a',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            color: '#a0a0b0'
-                          }}>
+                          <span
+                            style={{
+                              padding: '4px 8px',
+                              background: '#1e1e2f',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              color: '#a0a0b0',
+                              border: '1px solid #3a3a4a'
+                            }}
+                          >
                             +{timeSlots.length - 4} more
                           </span>
                         )}
@@ -442,8 +574,11 @@ const ResourceCard = ({
             transform: translateY(0);
           }
         }
+
         @keyframes spin {
-          to { transform: rotate(360deg); }
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>
