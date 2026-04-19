@@ -1,0 +1,64 @@
+.booking-container {
+  padding: 30px;
+  background: #0b1220;
+  min-height: 100vh;
+  color: white;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.form-card, .list-card {
+  background: #111827;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  background: #4f46e5;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.booking-item {
+  display: flex;
+  justify-content: space-between;
+  background: #1f2937;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.status {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.status.pending {
+  background: #f59e0b;
+}
+
+.status.approved {
+  background: #22c55e;
+}
+
+.status.rejected {
+  background: #ef4444;
+}
