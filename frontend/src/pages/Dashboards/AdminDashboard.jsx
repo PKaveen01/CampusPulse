@@ -1,24 +1,44 @@
-import React from 'react'
-import { Building2, BookOpen, Wrench, Users, Clock, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { Building2, BookOpen, Wrench, Users, Clock, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Navbar from '../../components/layout/Navbar'
 import StatCard from '../../components/common/StatCard'
+import { ticketService } from '../../services/ticketService'
 
 const MOCK_PENDING = [
   { id: 1, user: 'Alice Nguyen', resource: 'Conference Room A', time: 'Today 3:00–5:00 PM' },
   { id: 2, user: 'Bob Kumar', resource: 'Engineering Lab B', time: 'Tomorrow 9:00–11:00 AM' },
   { id: 3, user: 'Carla Da Silva', resource: 'Auditorium', time: 'Apr 2, 10:00 AM' },
 ]
-const MOCK_TICKETS = [
-  { number: 'TKT-001', desc: 'Projector purple tint – Room 101', priority: 'HIGH', assignee: 'John Tech' },
-  { number: 'TKT-002', desc: 'AC failure – Lab B', priority: 'CRITICAL', assignee: 'Unassigned' },
-  { number: 'TKT-003', desc: 'Broken whiteboard – Rm 204', priority: 'LOW', assignee: 'Jane Fix' },
-]
 const PRIORITY_COLOR = { CRITICAL: 'var(--danger)', HIGH: 'var(--warning)', MEDIUM: 'var(--info)', LOW: 'var(--success)' }
 
 export default function AdminDashboard() {
   const { user } = useAuth()
+  const [tickets, setTickets] = useState([])
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [ticketsError, setTicketsError] = useState('')
+
+  useEffect(() => {
+    loadTickets()
+  }, [])
+
+  async function loadTickets() {
+    setTicketsLoading(true)
+    setTicketsError('')
+    try {
+      const data = await ticketService.getMyTickets()
+      setTickets(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setTickets([])
+      setTicketsError(err?.response?.data?.message || 'Failed to load tickets')
+    } finally {
+      setTicketsLoading(false)
+    }
+  }
+
+  const activeTicketCount = tickets.filter(ticket => ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED').length
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -43,7 +63,14 @@ export default function AdminDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
           <StatCard icon={Building2}    label="Total Resources"    value="48"  sub="6 out of service"     color="var(--accent)"   delay={0.05} />
           <StatCard icon={BookOpen}     label="Pending Bookings"   value="12"  sub="Awaiting approval"    color="var(--warning)"  delay={0.1} />
-          <StatCard icon={Wrench}       label="Open Tickets"       value="9"   sub="2 critical priority"  color="var(--danger)"   delay={0.15} />
+          <StatCard
+            icon={Wrench}
+            label="Open Tickets"
+            value={ticketsLoading ? '...' : String(activeTicketCount)}
+            sub={ticketsLoading ? 'Loading tickets' : `${tickets.length} total tickets`}
+            color="var(--danger)"
+            delay={0.15}
+          />
           <StatCard icon={Users}        label="Active Users"       value="284" sub="This month"            color="var(--success)"  delay={0.2} />
         </div>
 
@@ -76,24 +103,41 @@ export default function AdminDashboard() {
             <Link to="/bookings" style={{ display: 'block', textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--accent)' }}>View all bookings →</Link>
           </div>
 
-          {/* Active Tickets */}
+          {/* All Tickets */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, animation: 'fadeIn 0.5s ease 0.25s both' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 16, fontWeight: 600 }}>Active Tickets</h2>
-              <Link to="/tickets" style={{ fontSize: 13, color: 'var(--danger)' }}>Manage →</Link>
+              <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 16, fontWeight: 600 }}>All Tickets</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button onClick={loadTickets} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-secondary)' }}>
+                  <RefreshCw size={12} /> Refresh
+                </button>
+                <Link to="/tickets" style={{ fontSize: 13, color: 'var(--danger)' }}>Manage →</Link>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {MOCK_TICKETS.map(t => (
-                <div key={t.number} style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.number}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: PRIORITY_COLOR[t.priority] ?? 'var(--text-muted)' }}>● {t.priority}</span>
+            {ticketsError ? (
+              <p style={{ fontSize: 12, color: 'var(--danger)' }}>{ticketsError}</p>
+            ) : ticketsLoading ? (
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading tickets...</p>
+            ) : tickets.length === 0 ? (
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>No tickets found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 320, overflow: 'auto', paddingRight: 2 }}>
+                {tickets.map(ticket => (
+                  <div key={ticket.id} style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ticket.ticketNumber}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: PRIORITY_COLOR[ticket.priority] ?? 'var(--text-muted)' }}>● {ticket.priority}</span>
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 500 }}>{ticket.description}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Status: <span style={{ color: 'var(--text-secondary)' }}>{ticket.status}</span>
+                      {' • '}
+                      Assignee: <span style={{ color: ticket.assignedTo ? 'var(--text-secondary)' : 'var(--danger)' }}>{ticket.assignedTo ? `User #${ticket.assignedTo}` : 'Unassigned'}</span>
+                    </p>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 500 }}>{t.desc}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Assignee: <span style={{ color: t.assignee === 'Unassigned' ? 'var(--danger)' : 'var(--text-secondary)' }}>{t.assignee}</span></p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}

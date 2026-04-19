@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Building2, BookOpen, Wrench, TrendingUp, BarChart3, Users, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Navbar from '../../components/layout/Navbar'
 import StatCard from '../../components/common/StatCard'
+import ManagerTicketingTab from './components/ManagerTicketingTab'
+import { ticketService } from '../../services/ticketService'
 
 const MOCK_UTILISATION = [
   { name: 'Engineering Lab A', util: 87, status: 'ACTIVE' },
@@ -19,6 +21,21 @@ const MOCK_PENDING = [
 
 export default function ManagerDashboard() {
   const { user } = useAuth()
+  const [openTicketCount, setOpenTicketCount] = useState('...')
+
+  useEffect(() => {
+    loadOpenTicketCount()
+  }, [])
+
+  async function loadOpenTicketCount() {
+    try {
+      const openTickets = await ticketService.getMyTickets('OPEN')
+      setOpenTicketCount(String(Array.isArray(openTickets) ? openTickets.length : 0))
+    } catch {
+      setOpenTicketCount('0')
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -39,7 +56,7 @@ export default function ManagerDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
           <StatCard icon={Building2} label="Resources"      value="48"  sub="6 out of service"   color="var(--accent)"   delay={0.05} />
           <StatCard icon={BookOpen}  label="Bookings Today" value="18"  sub="3 pending review"   color="var(--warning)"  delay={0.1} />
-          <StatCard icon={Wrench}    label="Open Tickets"   value="9"   sub="Maintenance issues" color="var(--danger)"   delay={0.15} />
+          <StatCard icon={Wrench}    label="Open Tickets"   value={openTicketCount}   sub="Maintenance issues" color="var(--danger)"   delay={0.15} />
           <StatCard icon={TrendingUp} label="Utilisation"   value="68%" sub="Avg this week"      color="var(--accent-2)" delay={0.2} />
         </div>
 
@@ -106,7 +123,7 @@ export default function ManagerDashboard() {
                 {[
                   { label: 'Resources', icon: Building2, to: '/resources', color: 'var(--accent)' },
                   { label: 'Bookings', icon: BookOpen, to: '/bookings', color: 'var(--warning)' },
-                  { label: 'Tickets', icon: Wrench, to: '/tickets', color: 'var(--danger)' },
+                  { label: 'Tickets', icon: Wrench, to: '/tickets/solve', color: 'var(--danger)' },
                   { label: 'Reports', icon: TrendingUp, to: '#', color: 'var(--accent-2)' },
                 ].map(a => (
                   <Link key={a.to} to={a.to} style={{
@@ -126,6 +143,10 @@ export default function ManagerDashboard() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <ManagerTicketingTab />
         </div>
       </main>
     </div>

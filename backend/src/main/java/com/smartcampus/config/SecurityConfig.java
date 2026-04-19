@@ -66,9 +66,19 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // ── Static file serving for avatars ──
+                        .requestMatchers("/uploads/**").permitAll()
+
                         // Admin-only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/technician/**").hasAnyRole("TECHNICIAN", "ADMIN")
+
+                        // ── Profile endpoints (authenticated users) ──
+                        .requestMatchers(HttpMethod.GET,    "/api/profile").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/profile").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/api/profile/avatar").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/profile/avatar").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/profile/password").authenticated()
 
                         // Resources endpoints
                         .requestMatchers(HttpMethod.GET, "/api/resources/**").authenticated()
@@ -83,8 +93,8 @@ public class SecurityConfig {
 
                         // Tickets endpoints
                         .requestMatchers(HttpMethod.POST, "/api/tickets/**").authenticated()
-                        .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "ADMIN")
-                        .requestMatchers("/api/tickets/*/assign").hasRole("ADMIN")
+                        .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "MANAGER", "ADMIN")
+                        .requestMatchers("/api/tickets/*/assign").hasAnyRole("MANAGER", "ADMIN")
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
