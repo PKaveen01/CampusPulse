@@ -116,7 +116,7 @@ export default function UserDashboard() {
                 </div>
               ))}
             </div>
-            <Link to="/tickets" style={{
+            <Link to="/tickets/new" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginTop: 16, padding: '9px', borderRadius: 8,
               border: '1px dashed var(--border)', color: 'var(--text-muted)', fontSize: 13,

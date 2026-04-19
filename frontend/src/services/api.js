@@ -2,12 +2,18 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
 })
 
 // Attach JWT on every request with debugging
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('accessToken')
+
+  const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData
+  if (isFormData && config.headers) {
+    delete config.headers['Content-Type']
+    delete config.headers['content-type']
+  }
+
   console.log('API Request:', config.method.toUpperCase(), config.url)
   console.log('Token present:', !!token)
   if (token) {

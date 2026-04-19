@@ -1,28 +1,61 @@
 package com.smartcampus.modules.booking.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-/** Stub placeholder — Member 2 (Booking Management) implements full entity */
 @Entity
-@Table(name = "bookings")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Booking {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @Column(unique = true) private String bookingNumber;
-    private Long userId;
-    private Long resourceId;
-    private LocalDate bookingDate;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String resourceName;
+
+    private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
-    @Column(columnDefinition = "TEXT") private String purpose;
-    private Integer expectedAttendees;
-    @Column(length = 20) private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    @PrePersist protected void onCreate() { createdAt = LocalDateTime.now(); updatedAt = LocalDateTime.now(); }
-    @PreUpdate  protected void onUpdate() { updatedAt = LocalDateTime.now(); }
+
+    private String purpose;
+
+    private String status;
+
+    public Long getId() { return id; }
+
+    public void setId(Long id) { this.id = id; }
+
+    public String getResourceName() { return resourceName; }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
+    public LocalDate getDate() { return date; }
+
+    public void setDate(LocalDate date) { this.date = date; }
+
+    public LocalTime getStartTime() { return startTime; }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() { return endTime; }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getPurpose() { return purpose; }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
+    public String getStatus() { return status; }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
