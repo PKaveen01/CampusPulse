@@ -1,61 +1,82 @@
 package com.smartcampus.modules.booking.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
+@Table(name = "bookings", indexes = {
+    @Index(name = "idx_booking_resource_time", columnList = "resource_id,booking_date,start_time,end_time"),
+    @Index(name = "idx_booking_user", columnList = "user_id"),
+    @Index(name = "idx_booking_status", columnList = "status")
+})
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String resourceName;
+    @Column(name = "booking_number", unique = true, length = 20)
+    private String bookingNumber;
 
-    private LocalDate date;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "resource_id", nullable = false)
+    private Long resourceId;
+
+    @Column(name = "booking_date", nullable = false)
+    private LocalDate bookingDate;
+
+    @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
+
+    @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String purpose;
 
-    private String status;
+    @Column(name = "expected_attendees")
+    private Integer expectedAttendees;
 
-    public Long getId() { return id; }
+    @Column(length = 20)
+    @Builder.Default
+    private String status = "PENDING";
 
-    public void setId(Long id) { this.id = id; }
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
 
-    public String getResourceName() { return resourceName; }
+    @Column(name = "approved_by")
+    private Long approvedBy;
 
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "cancelled_by")
+    private Long cancelledBy;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (status == null) status = "PENDING";
     }
 
-    public LocalDate getDate() { return date; }
-
-    public void setDate(LocalDate date) { this.date = date; }
-
-    public LocalTime getStartTime() { return startTime; }
-
-    public void setStartTime(LocalTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalTime getEndTime() { return endTime; }
-
-    public void setEndTime(LocalTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public String getPurpose() { return purpose; }
-
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
-
-    public String getStatus() { return status; }
-
-    public void setStatus(String status) {
-        this.status = status;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
