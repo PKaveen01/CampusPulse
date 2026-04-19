@@ -2,7 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
-import { ProfileProvider } from './context/ProfileContext'
+import { ProfileProvider } from './context/ProfileContext'        // ← NEW
 import ProtectedRoute from './components/common/ProtectedRoute'
 
 // Auth pages
@@ -18,13 +18,8 @@ import UserDashboard from './pages/Dashboards/UserDashboard'
 import AdminDashboard from './pages/Dashboards/AdminDashboard'
 import TechnicianDashboard from './pages/Dashboards/TechnicianDashboard'
 import ManagerDashboard from './pages/Dashboards/ManagerDashboard'
-
-// Tickets Module
 import TicketsPage from './pages/Tickets/TicketsPage'
 import TicketSolvePage from './pages/Tickets/TicketSolvePage'
-
-// Bookings Module
-import BookingPage from './pages/Bookings/BookingPage'
 
 // ========== MEMBER 1 - FACILITIES & ASSETS CATALOGUE MODULE ==========
 import ResourceList from './pages/Resources/ResourceList'
@@ -32,12 +27,15 @@ import ResourceAnalytics from './components/resources/ResourceAnalytics'
 import ResourceDetails from './pages/Resources/ResourceDetails'
 
 // ========== MEMBER 4 - USER PROFILE MODULE ==========
-import UserProfilePage from './pages/Profile/UserProfilePage'
+import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
 import UserManagementPage from './pages/Admin/UserManagementPage'
+
+// ========== MEMBER 2 - BOOKING MANAGEMENT MODULE ==========
+import BookingsPage from './pages/Bookings/BookingsPage'
 
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, AdminUsersPage,
+  ResourcesPage, AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -59,8 +57,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        {/* ProfileProvider sits inside AuthProvider so it can call
-            refetchUser() from AuthContext when the profile is updated. */}
+        {/*
+          ProfileProvider sits inside AuthProvider so it can call
+          refetchUser() from AuthContext when the profile is updated.
+        */}
         <ProfileProvider>
           <NotificationProvider>
             <Routes>
@@ -131,10 +131,10 @@ export default function App() {
 
               {/* Member 2 - Bookings Module */}
               <Route path="/bookings" element={
-                <ProtectedRoute><BookingPage /></ProtectedRoute>
+                <ProtectedRoute><BookingsPage /></ProtectedRoute>
               } />
 
-              {/* Member 3 - Tickets Module */}
+              {/* Member 3 - Tickets Module (stub) */}
               <Route path="/tickets" element={
                 <ProtectedRoute><TicketsPage /></ProtectedRoute>
               } />
