@@ -43,9 +43,6 @@ export function ResourcesPage() {
   return <StubPage icon={Building2} title="Facilities & Assets" member="Member 1" color="var(--accent)" />
 }
 
-export function BookingsPage() {
-  return <StubPage icon={BookOpen} title="Booking Management" member="Member 2" color="var(--warning)" />
-}
 
 export function TicketsPage() {
   return <StubPage icon={Wrench} title="Maintenance & Tickets" member="Member 3" color="var(--danger)" />
