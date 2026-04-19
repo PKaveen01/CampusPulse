@@ -1,46 +1,29 @@
 package com.smartcampus.modules.booking.service;
 
-import com.smartcampus.modules.booking.entity.Booking;
-import com.smartcampus.modules.booking.repository.BookingRepository;
-import org.springframework.stereotype.Service;
+import com.smartcampus.modules.booking.dto.BookingDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
-@Service
-public class BookingService {
+public interface BookingService {
 
-    private final BookingRepository repo;
+    BookingDTO.Response createBooking(BookingDTO.CreateRequest request, Long userId);
 
-    public BookingService(BookingRepository repo) {
-        this.repo = repo;
-    }
+    BookingDTO.Response approveBooking(Long bookingId, Long adminId, String remarks);
 
-    public Booking createBooking(Booking booking) {
+    BookingDTO.Response rejectBooking(Long bookingId, Long adminId, String reason);
 
-        List<Booking> existing = repo.findByResourceNameAndDate(
-                booking.getResourceName(),
-                booking.getDate()
-        );
+    BookingDTO.Response cancelBooking(Long bookingId, Long userId);
 
-        for (Booking b : existing) {
-            if (booking.getStartTime().isBefore(b.getEndTime()) &&
-                    booking.getEndTime().isAfter(b.getStartTime())) {
+    BookingDTO.Response getBookingById(Long bookingId, Long userId);
 
-                throw new RuntimeException("Time slot already booked!");
-            }
-        }
+    Page<BookingDTO.Response> getMyBookings(Long userId, Pageable pageable);
 
-        booking.setStatus("PENDING");
-        return repo.save(booking);
-    }
+    Page<BookingDTO.Response> getAllBookings(String status, Pageable pageable);
 
-    public List<Booking> getAll() {
-        return repo.findAll();
-    }
+    List<BookingDTO.TimeSlot> getAvailableTimeSlots(Long resourceId, LocalDate date);
 
-    public Booking updateStatus(Long id, String status) {
-        Booking b = repo.findById(id).orElseThrow();
-        b.setStatus(status);
-        return repo.save(b);
-    }
+    boolean checkConflict(Long resourceId, LocalDate date, java.time.LocalTime startTime, java.time.LocalTime endTime);
 }
