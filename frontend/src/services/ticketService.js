@@ -13,6 +13,10 @@ export const ticketService = {
     return data.data
   },
 
+  async deleteTicket(ticketId) {
+    await api.delete(`/tickets/${ticketId}`)
+  },
+
   async addComment(ticketId, comment, internal = false) {
     const { data } = await api.post(`/tickets/${ticketId}/comments`, {
       comment,
@@ -23,6 +27,11 @@ export const ticketService = {
 
   async updateTicketStatus(ticketId, payload) {
     const { data } = await api.patch(`/tickets/${ticketId}/status`, payload)
+    return data.data
+  },
+
+  async acceptAssignedTicket(ticketId) {
+    const { data } = await api.patch(`/tickets/${ticketId}/status`, { status: 'IN_PROGRESS' })
     return data.data
   },
 

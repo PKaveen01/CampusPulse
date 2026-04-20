@@ -1,9 +1,9 @@
 import React from 'react'
-import { Clock3 } from 'lucide-react'
+import { Clock3, Trash2 } from 'lucide-react'
 import TicketStatusPill from './TicketStatusPill'
 import TicketEmptyState from './TicketEmptyState'
 
-export default function TicketList({ loading, tickets, onViewDetails }) {
+export default function TicketList({ loading, tickets, currentUserId, deletingTicketId, onViewDetails, onDeleteTicket }) {
   return (
     <section
       style={{
@@ -46,7 +46,28 @@ export default function TicketList({ loading, tickets, onViewDetails }) {
               <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 Category: {ticket.category} • Location: {ticket.location || 'N/A'}
               </p>
-              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                {ticket.userId === currentUserId && (
+                  <button
+                    onClick={() => onDeleteTicket(ticket)}
+                    disabled={deletingTicketId === ticket.id}
+                    style={{
+                      padding: '7px 11px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(248,113,113,0.6)',
+                      color: '#fecaca',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      background: deletingTicketId === ticket.id ? 'rgba(248,113,113,0.25)' : 'rgba(248,113,113,0.10)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    {deletingTicketId === ticket.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
                 <button
                   onClick={() => onViewDetails(ticket.id)}
                   style={{

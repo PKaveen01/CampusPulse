@@ -130,9 +130,6 @@ public class TicketService {
 		}
 
 		ticket.setAssignedTo(assigneeUserId);
-		if (ticket.getStatus() == Ticket.Status.OPEN) {
-			ticket.setStatus(Ticket.Status.IN_PROGRESS);
-		}
 		ticketRepository.save(ticket);
 		return getTicketById(ticketId, currentUser);
 	}
@@ -191,6 +188,25 @@ public class TicketService {
 
 		ticketRepository.save(ticket);
 		return getTicketById(ticketId, currentUser);
+	}
+
+	@Transactional
+	public void deleteTicket(Long ticketId, CustomUserDetails currentUser) {
+		Ticket ticket = getTicketEntityById(ticketId);
+
+		boolean isOwner = Objects.equals(ticket.getUserId(), currentUser.getId());
+		if (!isOwner && !isAdminOrManager(currentUser)) {
+			throw new RuntimeException("Not allowed to delete this ticket");
+		}
+
+		List<TicketAttachment> attachments = ticketAttachmentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId);
+		for (TicketAttachment attachment : attachments) {
+			deletePhysicalFileIfExists(attachment.getFilePath());
+		}
+
+		ticketAttachmentRepository.deleteByTicketId(ticketId);
+		ticketCommentRepository.deleteByTicketId(ticketId);
+		ticketRepository.delete(ticket);
 	}
 
 	@Transactional
