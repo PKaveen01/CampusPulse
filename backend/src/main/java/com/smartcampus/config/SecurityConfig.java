@@ -87,9 +87,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/resources/**").hasRole("ADMIN")
 
                         // Bookings endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/bookings/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/my").authenticated()
-                        .requestMatchers("/api/bookings/*/approve").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/my").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/slots").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/check-conflict").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/admin").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/approve").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/reject").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/cancel").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/*").authenticated()
 
                         // Tickets endpoints
                         .requestMatchers(HttpMethod.POST, "/api/tickets/**").authenticated()
