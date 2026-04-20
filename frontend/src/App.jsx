@@ -30,9 +30,12 @@ import ResourceDetails from './pages/Resources/ResourceDetails'
 import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
 import UserManagementPage from './pages/Admin/UserManagementPage'
 
+// ========== MEMBER 2 - BOOKING MANAGEMENT MODULE ==========
+import BookingsPage from './pages/Bookings/BookingsPage'
+
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, AdminUsersPage,
+  ResourcesPage, AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -126,7 +129,7 @@ export default function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Member 2 - Bookings Module (stub) */}
+              {/* Member 2 - Bookings Module */}
               <Route path="/bookings" element={
                 <ProtectedRoute><BookingsPage /></ProtectedRoute>
               } />
