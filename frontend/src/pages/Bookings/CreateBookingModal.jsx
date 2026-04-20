@@ -53,6 +53,15 @@ export default function CreateBookingModal({ onClose, onSuccess, preselectedReso
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  // Derived — must be at component level so JSX can read them
+  const selectedResource = resources.find(r => String(r.id) === form.resourceId)
+
+  const capacityExceeded = !!(
+    selectedResource &&
+    form.expectedAttendees &&
+    Number(form.expectedAttendees) > selectedResource.capacity
+  )
+
   const availableSlots = slots.filter(s => s.available)
 
   const handleStartTime = (value) => {
@@ -67,6 +76,10 @@ export default function CreateBookingModal({ onClose, onSuccess, preselectedReso
 
   const handleSubmit = async () => {
     setError('')
+    if (capacityExceeded) {
+      setError(`Expected attendees exceed the resource capacity of ${selectedResource.capacity}`)
+      return
+    }
     if (!form.resourceId || !form.bookingDate || !form.startTime || !form.endTime || !form.purpose) {
       setError('Please fill in all required fields')
       return
@@ -88,8 +101,6 @@ export default function CreateBookingModal({ onClose, onSuccess, preselectedReso
       setSubmitting(false)
     }
   }
-
-  const selectedResource = resources.find(r => String(r.id) === form.resourceId)
 
   return (
     <div style={{
@@ -233,12 +244,33 @@ export default function CreateBookingModal({ onClose, onSuccess, preselectedReso
           <div>
             <label style={labelStyle}><Users size={11} style={{ display: 'inline', marginRight: 4 }} />Expected Attendees</label>
             <input
-              type="number" min={1}
+              type="number"
+              min={1}
+              max={selectedResource ? selectedResource.capacity : undefined}
               value={form.expectedAttendees}
               onChange={e => set('expectedAttendees', e.target.value)}
               placeholder={selectedResource ? `Max: ${selectedResource.capacity}` : 'Number of people'}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                borderColor: selectedResource && form.expectedAttendees &&
+                  Number(form.expectedAttendees) > selectedResource.capacity
+                  ? '#f87171'
+                  : 'var(--border)'
+              }}
             />
+            {selectedResource && form.expectedAttendees && Number(form.expectedAttendees) > selectedResource.capacity && (
+              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#f87171' }}>
+                <AlertCircle size={12} />
+                Exceeds capacity — max {selectedResource.capacity} for this resource
+              </div>
+            )}
+            {selectedResource && form.expectedAttendees && Number(form.expectedAttendees) > 0 &&
+              Number(form.expectedAttendees) <= selectedResource.capacity && (
+              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#34d399' }}>
+                <CheckCircle size={12} />
+                {form.expectedAttendees} of {selectedResource.capacity} capacity
+              </div>
+            )}
           </div>
 
         </div>
@@ -257,11 +289,11 @@ export default function CreateBookingModal({ onClose, onSuccess, preselectedReso
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || !form.resourceId || !form.bookingDate || !form.startTime || !form.endTime || !form.purpose}
+            disabled={submitting || !form.resourceId || !form.bookingDate || !form.startTime || !form.endTime || !form.purpose || capacityExceeded}
             style={{
               padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600,
               background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer',
-              opacity: (submitting || !form.resourceId || !form.bookingDate || !form.startTime || !form.endTime || !form.purpose) ? 0.6 : 1
+              opacity: (submitting || !form.resourceId || !form.bookingDate || !form.startTime || !form.endTime || !form.purpose || capacityExceeded) ? 0.6 : 1
             }}
           >
             {submitting ? 'Submitting…' : 'Submit Booking'}

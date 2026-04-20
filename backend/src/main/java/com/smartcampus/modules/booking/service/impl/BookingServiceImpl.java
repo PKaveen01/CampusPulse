@@ -63,6 +63,14 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException("Cannot book a date in the past");
         }
 
+        // Validate attendees do not exceed resource capacity
+        if (request.getExpectedAttendees() != null && request.getExpectedAttendees() > resource.getCapacity()) {
+            throw new RuntimeException(
+                    "Expected attendees (" + request.getExpectedAttendees() +
+                            ") exceeds the resource capacity of " + resource.getCapacity() + "."
+            );
+        }
+
         // Validate time range
         if (!request.getStartTime().isBefore(request.getEndTime())) {
             throw new RuntimeException("Start time must be before end time");
