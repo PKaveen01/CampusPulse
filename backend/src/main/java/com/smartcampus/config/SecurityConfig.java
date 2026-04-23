@@ -102,6 +102,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "MANAGER", "ADMIN")
                         .requestMatchers("/api/tickets/*/assign").hasAnyRole("MANAGER", "ADMIN")
 
+                        // Notification endpoints (all authenticated users)
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications/unread-count").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/read-all").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/*/read").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/read").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/*").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications/preferences").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/preferences").authenticated()
+
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
