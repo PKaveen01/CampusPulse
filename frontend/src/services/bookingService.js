@@ -46,6 +46,12 @@ const bookingService = {
     return res.data
   },
 
+  // Permanently delete a PENDING booking (before admin review)
+  async deleteBooking(id) {
+    const { data: res } = await api.delete(`/bookings/${id}`)
+    return res.data
+  },
+
   // Get available time slots for a resource on a date
   async getAvailableSlots(resourceId, date) {
     const { data: res } = await api.get('/bookings/slots', {

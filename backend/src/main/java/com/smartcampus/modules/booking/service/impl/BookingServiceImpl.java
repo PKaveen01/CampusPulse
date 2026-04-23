@@ -237,6 +237,31 @@ public class BookingServiceImpl implements BookingService {
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // DELETE  (only allowed while status is PENDING)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId, Long userId) {
+        Booking booking = getOrThrow(bookingId);
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this booking");
+        }
+
+        if (!"PENDING".equals(booking.getStatus())) {
+            throw new RuntimeException(
+                "Booking can only be deleted while it is still PENDING. " +
+                "Current status: " + booking.getStatus()
+            );
+        }
+
+        recordHistory(bookingId, "DELETED", userId, "PENDING", null, "Booking deleted by user before review");
+        bookingRepository.delete(booking);
+        log.info("Booking {} permanently deleted by user {}", bookingId, userId);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // READ
     // ────────────────────────────────────────────────────────────────────────
 

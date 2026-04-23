@@ -99,6 +99,19 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success("Booking cancelled", result));
     }
 
+    // ── Delete booking (only while PENDING) ─────────────────────────────────
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteBooking(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        try {
+            bookingService.deleteBooking(id, principal.getId());
+            return ResponseEntity.ok(ApiResponse.success("Booking deleted successfully", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     // ── Available time slots ────────────────────────────────────────────────
     @GetMapping("/slots")
     public ResponseEntity<ApiResponse<List<BookingDTO.TimeSlot>>> getAvailableSlots(
