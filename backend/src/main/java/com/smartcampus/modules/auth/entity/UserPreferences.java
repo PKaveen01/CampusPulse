@@ -55,4 +55,12 @@ public class UserPreferences {
     public boolean isEmailNotifications() {
         return emailNotifications != null && emailNotifications;
     }
+
+    public boolean isBookingUpdates() {
+        return bookingUpdates != null && bookingUpdates;
+    }
+
+    public boolean isTicketUpdates() {
+        return ticketUpdates != null && ticketUpdates;
+    }
 }
