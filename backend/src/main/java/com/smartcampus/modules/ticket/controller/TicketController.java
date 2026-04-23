@@ -79,6 +79,14 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success("Ticket status updated", ticket));
     }
 
+    @DeleteMapping("/{ticketId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        ticketService.deleteTicket(ticketId, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Ticket deleted", null));
+    }
+
     @PostMapping("/{ticketId}/comments")
     public ResponseEntity<ApiResponse<TicketDTO.CommentDTO>> addComment(
             @PathVariable Long ticketId,

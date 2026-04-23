@@ -87,14 +87,30 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/resources/**").hasRole("ADMIN")
 
                         // Bookings endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/bookings/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/my").authenticated()
-                        .requestMatchers("/api/bookings/*/approve").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/my").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/slots").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/check-conflict").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/admin").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/approve").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/reject").hasAnyRole("ADMIN","MANAGER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/bookings/*/cancel").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/bookings/*").authenticated()
 
                         // Tickets endpoints
                         .requestMatchers(HttpMethod.POST, "/api/tickets/**").authenticated()
-                        .requestMatchers("/api/tickets/*/status").hasAnyRole("TECHNICIAN", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/status").authenticated()
                         .requestMatchers("/api/tickets/*/assign").hasAnyRole("MANAGER", "ADMIN")
+
+                        // Notification endpoints (all authenticated users)
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications/unread-count").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/read-all").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/*/read").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/read").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/*").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/notifications/preferences").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/notifications/preferences").authenticated()
 
                         // All other requests require authentication
                         .anyRequest().authenticated()

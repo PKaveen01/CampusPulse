@@ -152,6 +152,36 @@ public class ProfileService {
         return AuthDTOs.UserDTO.fromEntity(saved);
     }
 
+    /**
+     * Permanently delete the user's account and all associated data.
+     * For local-auth users a password confirmation is required.
+     * OAuth2 users can delete without a password.
+     */
+    @Transactional
+    public void deleteAccount(Long userId, String confirmationPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Local-auth accounts must confirm with their current password
+        if (user.getPasswordHash() != null) {
+            if (confirmationPassword == null || confirmationPassword.isBlank()) {
+                throw new RuntimeException("Password confirmation is required to delete your account.");
+            }
+            if (!passwordEncoder.matches(confirmationPassword, user.getPasswordHash())) {
+                throw new RuntimeException("Incorrect password. Account deletion cancelled.");
+            }
+        }
+
+        // Remove avatar file from disk (if local)
+        if (user.getAvatarUrl() != null) {
+            Path uploadPath = Paths.get(uploadDir, "avatars");
+            deleteOldAvatar(user.getAvatarUrl(), uploadPath);
+        }
+
+        userRepository.delete(user);
+        log.info("Account permanently deleted for user id={}", userId);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void deleteOldAvatar(String avatarUrl, Path uploadPath) {

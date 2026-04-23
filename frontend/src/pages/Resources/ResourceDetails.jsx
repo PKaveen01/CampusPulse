@@ -726,6 +726,28 @@ const ResourceDetails = () => {
 
                                 {/* Action Buttons */}
                                 <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                    {resource.status === 'ACTIVE' && (
+                                        <button
+                                            onClick={() => navigate('/bookings', { state: { resourceId: resource.id } })}
+                                            style={{
+                                                flex: 1,
+                                                padding: '12px',
+                                                background: 'var(--accent)',
+                                                border: '1px solid var(--accent)',
+                                                borderRadius: 'var(--radius-sm)',
+                                                color: '#fff',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 8,
+                                                fontWeight: 600,
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            📅 Book This Resource
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleBookNow}
                                         disabled={resource.status !== 'ACTIVE'}

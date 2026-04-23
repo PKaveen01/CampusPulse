@@ -93,4 +93,23 @@ public class ProfileController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    /**
+     * DELETE /api/profile
+     * Permanently deletes the authenticated user's account.
+     * Local-auth users must supply their current password in the request body.
+     */
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody(required = false) AuthDTOs.DeleteAccountRequest request) {
+        try {
+            String password = (request != null) ? request.getPassword() : null;
+            profileService.deleteAccount(principal.getId(), password);
+            return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

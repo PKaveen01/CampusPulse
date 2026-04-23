@@ -29,10 +29,14 @@ import ResourceDetails from './pages/Resources/ResourceDetails'
 // ========== MEMBER 4 - USER PROFILE MODULE ==========
 import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
 import UserManagementPage from './pages/Admin/UserManagementPage'
+import NotificationsPage from './pages/Notifications/NotificationsPage'
+
+// ========== MEMBER 2 - BOOKING MANAGEMENT MODULE ==========
+import BookingsPage from './pages/Bookings/BookingsPage'
 
 // Stub pages (other members)
 import {
-  ResourcesPage, BookingsPage, AdminUsersPage,
+  ResourcesPage, AdminUsersPage,
 } from './pages/Stubs'
 
 // Smart redirect based on role
@@ -103,6 +107,13 @@ export default function App() {
                 </ProtectedRoute>
               } />
 
+              {/* ========== MEMBER 4 - Notifications Centre ========== */}
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              } />
+
               {/* ========== MODULE PAGES - ORDER MATTERS! ========== */}
 
               {/* Member 1 - Resource Analytics (most specific - MUST BE FIRST) */}
@@ -126,7 +137,7 @@ export default function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Member 2 - Bookings Module (stub) */}
+              {/* Member 2 - Bookings Module */}
               <Route path="/bookings" element={
                 <ProtectedRoute><BookingsPage /></ProtectedRoute>
               } />
