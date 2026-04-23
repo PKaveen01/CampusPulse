@@ -29,6 +29,7 @@ import ResourceDetails from './pages/Resources/ResourceDetails'
 // ========== MEMBER 4 - USER PROFILE MODULE ==========
 import UserProfilePage from './pages/Profile/UserProfilePage'   // ← NEW
 import UserManagementPage from './pages/Admin/UserManagementPage'
+import NotificationsPage from './pages/Notifications/NotificationsPage'
 
 // ========== MEMBER 2 - BOOKING MANAGEMENT MODULE ==========
 import BookingsPage from './pages/Bookings/BookingsPage'
@@ -103,6 +104,13 @@ export default function App() {
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <UserProfilePage />
+                </ProtectedRoute>
+              } />
+
+              {/* ========== MEMBER 4 - Notifications Centre ========== */}
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <NotificationsPage />
                 </ProtectedRoute>
               } />
 
