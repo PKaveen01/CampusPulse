@@ -56,4 +56,16 @@ export const profileService = {
     const { data } = await api.put('/profile/password', payload)
     return data
   },
+
+  /**
+   * Permanently delete the current user's account.
+   * @param {string|null} password - required for local-auth accounts; omit for OAuth2.
+   * @returns {Promise<void>}
+   */
+  async deleteAccount(password = null) {
+    const { data } = await api.delete('/profile', {
+      data: password ? { password } : {},
+    })
+    return data
+  },
 }

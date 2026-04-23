@@ -1,6 +1,8 @@
 package com.smartcampus.modules.auth.controller;
 
+import com.smartcampus.modules.auth.dto.NotificationDTOs.PreferencesDTO;
 import com.smartcampus.modules.auth.entity.Notification;
+import com.smartcampus.modules.auth.entity.UserPreferences;
 import com.smartcampus.modules.auth.security.CustomUserDetails;
 import com.smartcampus.modules.auth.service.NotificationService;
 import com.smartcampus.common.dto.ApiResponse;
@@ -50,5 +52,39 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails currentUser) {
         notificationService.markAllAsRead(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read", null));
+    }
+
+    // ── NEW: Delete a single notification ──────────────────────────────────
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        notificationService.deleteNotification(id, currentUser.getId());
+        return ResponseEntity.ok(ApiResponse.success("Notification deleted", null));
+    }
+
+    // ── NEW: Delete all read notifications ─────────────────────────────────
+    @DeleteMapping("/read")
+    public ResponseEntity<ApiResponse<Void>> deleteAllRead(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        notificationService.deleteAllRead(currentUser.getId());
+        return ResponseEntity.ok(ApiResponse.success("Read notifications deleted", null));
+    }
+
+    // ── NEW: Get user preferences ───────────────────────────────────────────
+    @GetMapping("/preferences")
+    public ResponseEntity<ApiResponse<UserPreferences>> getPreferences(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        UserPreferences prefs = notificationService.getPreferences(currentUser.getId());
+        return ResponseEntity.ok(ApiResponse.success("Preferences fetched", prefs));
+    }
+
+    // ── NEW: Update user preferences ────────────────────────────────────────
+    @PutMapping("/preferences")
+    public ResponseEntity<ApiResponse<UserPreferences>> updatePreferences(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody PreferencesDTO dto) {
+        UserPreferences prefs = notificationService.updatePreferences(currentUser.getId(), dto);
+        return ResponseEntity.ok(ApiResponse.success("Preferences updated", prefs));
     }
 }
