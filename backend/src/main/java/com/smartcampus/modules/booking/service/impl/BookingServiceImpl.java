@@ -243,8 +243,8 @@ public class BookingServiceImpl implements BookingService {
 
         if (!"PENDING".equals(booking.getStatus())) {
             throw new RuntimeException(
-                "Booking can only be deleted while it is still PENDING. " +
-                "Current status: " + booking.getStatus()
+                    "Booking can only be deleted while it is still PENDING. " +
+                            "Current status: " + booking.getStatus()
             );
         }
 
@@ -386,35 +386,4 @@ public class BookingServiceImpl implements BookingService {
         return r;
     }
 
-    // ── DELETE (hard delete, admin only) ───────────────────────────────────────
-
-    @Override
-    @Transactional
-    public void deleteBooking(Long bookingId, Long adminId) {
-        Booking booking = getOrThrow(bookingId);
-
-        // Only allow deleting cancelled/rejected bookings to prevent data loss
-        if (!"CANCELLED".equals(booking.getStatus()) && !"REJECTED".equals(booking.getStatus())) {
-            throw new RuntimeException(
-                    "Only CANCELLED or REJECTED bookings can be deleted. " +
-                            "Cancel the booking first before deleting.");
-        }
-
-        // Notify the booking owner before deleting
-        try {
-            notificationService.createNotification(
-                    booking.getUserId(),
-                    "BOOKING_DELETED",
-                    "Booking Record Removed",
-                    String.format("Your booking #%s has been permanently removed by an administrator.",
-                            booking.getBookingNumber()),
-                    "BOOKING", bookingId
-            );
-        } catch (Exception e) {
-            log.warn("Failed to notify user about booking deletion: {}", e.getMessage());
-        }
-
-        historyRepository.deleteByBookingId(bookingId);
-        bookingRepository.delete(booking);
-    }
 }
