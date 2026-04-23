@@ -17,6 +17,8 @@ public interface BookingService {
 
     BookingDTO.Response cancelBooking(Long bookingId, Long userId);
 
+    void deleteBooking(Long bookingId, Long userId);
+
     BookingDTO.Response getBookingById(Long bookingId, Long userId);
 
     Page<BookingDTO.Response> getMyBookings(Long userId, Pageable pageable);
