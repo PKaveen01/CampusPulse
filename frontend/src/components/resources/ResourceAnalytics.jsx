@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     TrendingUp,
-    TrendingDown,
     Calendar,
     Clock,
     BarChart3,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 const ResourceAnalytics = ({ onClose }) => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('week');
@@ -28,16 +29,21 @@ const ResourceAnalytics = ({ onClose }) => {
         fetchStats();
     }, [timeRange]);
 
+    const handleClose = () => {
+        if (onClose) {
+            onClose();
+        }
+        navigate('/resources');
+    };
+
     const fetchStats = async () => {
         setLoading(true);
         try {
-            // Fetch main analytics data
             const response = await fetch(`/api/resources/analytics/dashboard`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
             });
             const data = await response.json();
 
-            // Fetch real booking trend data from backend
             const trendResponse = await fetch(`/api/resources/analytics/trend?range=${timeRange}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
             });
@@ -50,20 +56,17 @@ const ResourceAnalytics = ({ onClose }) => {
                 trendData = realTrendData;
                 maxBookings = Math.max(...trendData.map(d => d.count), 1);
             } else {
-                // Fallback: Generate trend data from actual resource creation dates
                 const resourcesResponse = await fetch(`/api/resources?size=100`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
                 });
                 const resourcesData = await resourcesResponse.json();
 
-                // Group resources by creation date
                 const creationMap = new Map();
                 resourcesData.content?.forEach(resource => {
                     const date = new Date(resource.createdAt).toLocaleDateString();
                     creationMap.set(date, (creationMap.get(date) || 0) + 1);
                 });
 
-                // Convert to trend format
                 const days = getLastNDays(7);
                 trendData = days.map(day => ({
                     label: day.label,
@@ -72,7 +75,6 @@ const ResourceAnalytics = ({ onClose }) => {
                 maxBookings = Math.max(...trendData.map(d => d.count), 1);
             }
 
-            // Transform data to match component's expected format
             const transformedStats = {
                 totalResources: data.totalResources || 0,
                 activeResources: data.activeResources || 0,
@@ -89,7 +91,6 @@ const ResourceAnalytics = ({ onClose }) => {
                 topResources: []
             };
 
-            // Add resources by type as top resources
             if (data.resourcesByType && Object.keys(data.resourcesByType).length > 0) {
                 transformedStats.topResources = Object.entries(data.resourcesByType)
                     .map(([type, count]) => ({
@@ -282,7 +283,7 @@ const ResourceAnalytics = ({ onClose }) => {
                     </div>
 
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         style={{
                             width: 40,
                             height: 40,

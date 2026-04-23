@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ShieldCheck, Wrench, UserCog, User, ChevronDown, Power, PowerOff } from 'lucide-react'
 
 const ROLE_META = {
@@ -27,12 +28,39 @@ function Avatar({ user }) {
 
 function RoleDropdown({ user, onChangeRole }) {
   const [open, setOpen] = useState(false)
+  const [coords, setCoords] = useState({ top: 0, left: 0, flip: false })
+  const btnRef = useRef(null)
   const meta = ROLE_META[user.role] ?? ROLE_META.USER
   const Icon = meta.icon
 
+  // Recalculate position every time the dropdown opens
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      const dropdownHeight = ALL_ROLES.length * 42 // approx height per row
+      const spaceBelow = window.innerHeight - rect.bottom
+      const flipUp = spaceBelow < dropdownHeight + 8
+
+      setCoords({
+        top: flipUp ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        left: rect.left,
+        flip: flipUp,
+      })
+    }
+  }, [open])
+
+  // Close on scroll so position doesn't drift
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    return () => window.removeEventListener('scroll', close, true)
+  }, [open])
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div style={{ display: 'inline-block' }}>
       <button
+        ref={btnRef}
         onClick={() => setOpen(o => !o)}
         style={{
           display: 'flex', alignItems: 'center', gap: 5,
@@ -47,20 +75,28 @@ function RoleDropdown({ user, onChangeRole }) {
         <ChevronDown size={10} style={{ opacity: 0.7, transform: open ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
-          {/* backdrop to close */}
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+          {/* Full-screen backdrop to close on outside click */}
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
           <div style={{
-            position: 'absolute', top: '110%', left: 0, zIndex: 100,
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-            minWidth: 140, boxShadow: 'var(--shadow)',
+            position: 'fixed',
+            top: coords.top,
+            left: coords.left,
+            zIndex: 9999,
+            background: '#111827',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 'var(--radius-sm)',
+            overflow: 'hidden',
+            minWidth: 150,
+            boxShadow: '0 12px 32px rgba(0,0,0,0.7)',
             animation: 'fadeIn 0.15s ease',
+            transformOrigin: coords.flip ? 'bottom left' : 'top left',
           }}>
             {ALL_ROLES.map(r => {
               const m = ROLE_META[r]
               const Mi = m.icon
+              const isActive = r === user.role
               return (
                 <button
                   key={r}
@@ -68,13 +104,14 @@ function RoleDropdown({ user, onChangeRole }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     width: '100%', padding: '9px 14px', textAlign: 'left',
-                    background: r === user.role ? `${m.color}14` : 'transparent',
-                    color: r === user.role ? m.color : 'var(--text-secondary)',
-                    fontSize: 13, fontWeight: r === user.role ? 600 : 400,
-                    cursor: 'pointer', borderBottom: '1px solid var(--border)',
+                    background: isActive ? `${m.color}22` : '#111827',
+                    color: isActive ? m.color : 'var(--text-secondary)',
+                    fontSize: 13, fontWeight: isActive ? 600 : 400,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
                   }}
-                  onMouseOver={e => e.currentTarget.style.background = `${m.color}20`}
-                  onMouseOut={e => e.currentTarget.style.background = r === user.role ? `${m.color}14` : 'transparent'}
+                  onMouseOver={e => e.currentTarget.style.background = `${m.color}30`}
+                  onMouseOut={e => e.currentTarget.style.background = isActive ? `${m.color}22` : '#111827'}
                 >
                   <Mi size={12} style={{ color: m.color }} />
                   {m.label}
@@ -82,7 +119,8 @@ function RoleDropdown({ user, onChangeRole }) {
               )
             })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )

@@ -103,12 +103,27 @@ export function ProfileProvider({ children }) {
     }
   }, [])
 
+  /** Permanently delete the user's own account */
+  const deleteAccount = useCallback(async (password = null) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await profileService.deleteAccount(password)
+    } catch (err) {
+      const msg = err?.response?.data?.message ?? 'Account deletion failed'
+      setError(msg)
+      throw new Error(msg)
+    } finally {
+      setSaving(false)
+    }
+  }, [])
+
   const clearError = useCallback(() => setError(null), [])
 
   return (
     <ProfileContext.Provider value={{
       profile, loading, saving, error,
-      fetchProfile, updateProfile, uploadAvatar, removeAvatar, changePassword,
+      fetchProfile, updateProfile, uploadAvatar, removeAvatar, changePassword, deleteAccount,
       clearError,
     }}>
       {children}

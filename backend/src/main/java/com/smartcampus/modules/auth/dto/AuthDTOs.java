@@ -117,6 +117,12 @@ public class AuthDTOs {
     }
 
     @Data
+    public static class DeleteAccountRequest {
+        // Optional: only required for local-auth users; omit for OAuth2 users.
+        private String password;
+    }
+
+    @Data
     public static class TokenResponse {
         private String accessToken;
         private String tokenType = "Bearer";
