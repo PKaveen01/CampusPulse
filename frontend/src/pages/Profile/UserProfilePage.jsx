@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   User, Mail, Phone, Building2, FileText, Lock,
   Camera, Trash2, Save, ArrowLeft, CheckCircle, AlertCircle,
-  Eye, EyeOff, Shield, Calendar, Clock,
+  Eye, EyeOff, Shield, Calendar, Clock, AlertTriangle,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../context/ProfileContext'
@@ -154,6 +154,7 @@ const TABS = [
   { id: 'info',     label: 'Profile Info',   icon: User },
   { id: 'avatar',  label: 'Profile Photo',  icon: Camera },
   { id: 'security',label: 'Security',        icon: Shield },
+  { id: 'danger',  label: 'Danger Zone',    icon: AlertTriangle },
 ]
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ export default function UserProfilePage() {
   const { user } = useAuth()
   const {
     profile, loading, saving,
-    fetchProfile, updateProfile, uploadAvatar, removeAvatar, changePassword,
+    fetchProfile, updateProfile, uploadAvatar, removeAvatar, changePassword, deleteAccount,
   } = useProfile()
   const navigate = useNavigate()
 
@@ -180,6 +181,13 @@ export default function UserProfilePage() {
   // ── Avatar preview ──
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile,    setAvatarFile]    = useState(null)
+
+  // ── Delete account state ──
+  const [deleteModal,   setDeleteModal]   = useState(false)
+  const [deleteStep,    setDeleteStep]    = useState(1)   // 1 = warning, 2 = confirm
+  const [deleteConfirm, setDeleteConfirm] = useState('')  // typed email or password
+  const [deleteError,   setDeleteError]   = useState('')
+  const [showDeletePw,  setShowDeletePw]  = useState(false)
 
   useEffect(() => { fetchProfile() }, [fetchProfile])
 
@@ -272,6 +280,27 @@ export default function UserProfilePage() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    setDeleteError('')
+    const isOAuth = displayProfile?.provider === 'GOOGLE'
+
+    // For local-auth: verify typed email matches, then use deleteConfirm as password
+    if (!isOAuth && !deleteConfirm.trim()) {
+      setDeleteError('Please enter your password to confirm.')
+      return
+    }
+
+    try {
+      await deleteAccount(isOAuth ? null : deleteConfirm)
+      // After deletion, clear tokens and go to home
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      navigate('/', { replace: true })
+    } catch (err) {
+      setDeleteError(err.message)
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────────────────────
@@ -344,8 +373,10 @@ export default function UserProfilePage() {
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
-              background: activeTab === id ? 'var(--accent)' : 'transparent',
-              color: activeTab === id ? '#fff' : 'var(--text-secondary)',
+              background: activeTab === id
+                ? (id === 'danger' ? 'rgba(248,113,113,0.85)' : 'var(--accent)')
+                : 'transparent',
+              color: activeTab === id ? '#fff' : (id === 'danger' ? '#f87171' : 'var(--text-secondary)'),
             }}>
               <Icon size={15} /> {label}
             </button>
@@ -591,7 +622,162 @@ export default function UserProfilePage() {
             )}
           </SectionCard>
         )}
+        {/* ══════════ TAB: Danger Zone ══════════ */}
+        {activeTab === 'danger' && (
+          <SectionCard style={{ border: '1px solid rgba(248,113,113,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <AlertTriangle size={20} color="#f87171" />
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f87171', margin: 0 }}>
+                Danger Zone
+              </h2>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.6 }}>
+              Actions in this section are permanent and cannot be undone. Please proceed with caution.
+            </p>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '20px 24px', borderRadius: 12,
+              background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)',
+              flexWrap: 'wrap', gap: 16,
+            }}>
+              <div>
+                <p style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15, margin: 0 }}>
+                  Delete Account
+                </p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, margin: '4px 0 0' }}>
+                  Permanently remove your account, profile, and all associated data. This cannot be undone.
+                </p>
+              </div>
+              <Btn
+                variant="danger"
+                style={{ flexShrink: 0, background: 'rgba(248,113,113,0.2)', border: '1px solid rgba(248,113,113,0.4)' }}
+                onClick={() => { setDeleteModal(true); setDeleteStep(1); setDeleteConfirm(''); setDeleteError('') }}
+              >
+                <Trash2 size={15} /> Delete My Account
+              </Btn>
+            </div>
+          </SectionCard>
+        )}
       </div>
+
+      {/* ══════════ Delete Account Modal ══════════ */}
+      {deleteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid rgba(248,113,113,0.3)',
+            borderRadius: 20, padding: '36px 32px', maxWidth: 480, width: '100%',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+            animation: 'fadeIn 0.2s ease',
+          }}>
+            {deleteStep === 1 ? (
+              <>
+                {/* Step 1: Warning */}
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: '50%',
+                    background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px',
+                  }}>
+                    <AlertTriangle size={28} color="#f87171" />
+                  </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+                    Delete Your Account?
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                    This will <strong style={{ color: '#f87171' }}>permanently delete</strong> your account and remove all your data, including profile information, bookings, and tickets. This action <strong>cannot be undone</strong>.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <Btn variant="ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setDeleteModal(false)}>
+                    Cancel
+                  </Btn>
+                  <Btn
+                    variant="danger"
+                    style={{ flex: 1, justifyContent: 'center', background: 'rgba(248,113,113,0.2)', border: '1px solid rgba(248,113,113,0.5)' }}
+                    onClick={() => setDeleteStep(2)}
+                  >
+                    Continue
+                  </Btn>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Step 2: Confirm */}
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#f87171', margin: '0 0 8px' }}>
+                    Final Confirmation
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                    {displayProfile?.provider === 'GOOGLE'
+                      ? 'Click the button below to permanently delete your account.'
+                      : 'Enter your current password to confirm account deletion.'}
+                  </p>
+                </div>
+
+                {deleteError && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+                    padding: '10px 14px', borderRadius: 10,
+                    background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+                    color: '#f87171', fontSize: 13,
+                  }}>
+                    <AlertCircle size={15} />{deleteError}
+                  </div>
+                )}
+
+                {displayProfile?.provider !== 'GOOGLE' && (
+                  <FieldRow icon={Lock} label="Your Password" style={{ marginBottom: 20 }}>
+                    <div style={{ position: 'relative' }}>
+                      <Input
+                        type={showDeletePw ? 'text' : 'password'}
+                        value={deleteConfirm}
+                        onChange={e => setDeleteConfirm(e.target.value)}
+                        placeholder="Enter your password"
+                        style={{ paddingRight: 44 }}
+                        onKeyDown={e => e.key === 'Enter' && handleDeleteAccount()}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowDeletePw(s => !s)}
+                        style={{
+                          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--text-muted)', padding: 0, display: 'flex',
+                        }}
+                      >
+                        {showDeletePw ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </FieldRow>
+                )}
+
+                <div style={{ display: 'flex', gap: 12, marginTop: displayProfile?.provider === 'GOOGLE' ? 0 : 8 }}>
+                  <Btn variant="ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setDeleteModal(false)}>
+                    Cancel
+                  </Btn>
+                  <Btn
+                    variant="danger"
+                    loading={saving}
+                    style={{ flex: 1, justifyContent: 'center', background: '#f87171', color: '#fff', border: 'none' }}
+                    onClick={handleDeleteAccount}
+                  >
+                    <Trash2 size={15} /> Delete Forever
+                  </Btn>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Toast ── */}
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
