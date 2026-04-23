@@ -63,6 +63,14 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException("Cannot book a date in the past");
         }
 
+        // Validate attendees do not exceed resource capacity
+        if (request.getExpectedAttendees() != null && request.getExpectedAttendees() > resource.getCapacity()) {
+            throw new RuntimeException(
+                    "Expected attendees (" + request.getExpectedAttendees() +
+                            ") exceeds the resource capacity of " + resource.getCapacity() + "."
+            );
+        }
+
         // Validate time range
         if (!request.getStartTime().isBefore(request.getEndTime())) {
             throw new RuntimeException("Start time must be before end time");
@@ -226,6 +234,31 @@ public class BookingServiceImpl implements BookingService {
 
         recordHistory(bookingId, "CANCELLED", userId, oldStatus, "CANCELLED", "Cancelled by user");
         return toResponse(booking);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // DELETE  (only allowed while status is PENDING)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId, Long userId) {
+        Booking booking = getOrThrow(bookingId);
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this booking");
+        }
+
+        if (!"PENDING".equals(booking.getStatus())) {
+            throw new RuntimeException(
+                "Booking can only be deleted while it is still PENDING. " +
+                "Current status: " + booking.getStatus()
+            );
+        }
+
+        recordHistory(bookingId, "DELETED", userId, "PENDING", null, "Booking deleted by user before review");
+        bookingRepository.delete(booking);
+        log.info("Booking {} permanently deleted by user {}", bookingId, userId);
     }
 
     // ────────────────────────────────────────────────────────────────────────
