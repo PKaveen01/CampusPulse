@@ -296,6 +296,44 @@ public class TicketService {
         return getTicketById(ticketId, currentUser);
     }
 
+    // ── DELETE ─────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void deleteTicket(Long ticketId, CustomUserDetails currentUser) {
+        Ticket ticket = getTicketEntityById(ticketId);
+
+        boolean isOwner = Objects.equals(ticket.getUserId(), currentUser.getId());
+        if (!isOwner && !isAdminOrManager(currentUser)) {
+            throw new RuntimeException("Not allowed to delete this ticket");
+        }
+
+        // Notify assigned technician if ticket is being deleted while in progress
+        if (ticket.getAssignedTo() != null
+                && ticket.getStatus() == Ticket.Status.IN_PROGRESS) {
+            try {
+                notificationService.createNotification(
+                        ticket.getAssignedTo(),
+                        "TICKET_STATUS_CHANGED",
+                        "Ticket #" + ticket.getTicketNumber() + " Deleted",
+                        "Ticket #" + ticket.getTicketNumber() + " has been deleted and is no longer active.",
+                        "TICKET", ticketId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to notify assignee about ticket deletion: {}", e.getMessage());
+            }
+        }
+
+        List<TicketAttachment> attachments =
+                ticketAttachmentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId);
+        for (TicketAttachment attachment : attachments) {
+            deletePhysicalFileIfExists(attachment.getFilePath());
+        }
+
+        ticketAttachmentRepository.deleteByTicketId(ticketId);
+        ticketCommentRepository.deleteByTicketId(ticketId);
+        ticketRepository.delete(ticket);
+    }
+
     // ── COMMENTS ───────────────────────────────────────────────────────────
 
     @Transactional

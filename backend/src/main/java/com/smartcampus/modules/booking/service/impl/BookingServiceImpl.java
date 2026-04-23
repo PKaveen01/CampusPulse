@@ -230,6 +230,45 @@ public class BookingServiceImpl implements BookingService {
         return toResponse(booking);
     }
 
+    // ── DELETE (user can delete their own PENDING booking) ─────────────────
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId, Long userId) {
+        Booking booking = getOrThrow(bookingId);
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this booking");
+        }
+
+        if (!"PENDING".equals(booking.getStatus())) {
+            throw new RuntimeException(
+                "Booking can only be deleted while it is still PENDING. " +
+                "Current status: " + booking.getStatus()
+            );
+        }
+
+        // Notify ADMIN + MANAGER that the user pulled their own request
+        Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
+        String resourceName = resource != null ? resource.getName() : "unknown resource";
+        try {
+            notificationService.notifyByRoles(
+                    List.of(User.Role.ADMIN, User.Role.MANAGER),
+                    "BOOKING_DELETED",
+                    "Booking Request Withdrawn",
+                    String.format("Booking #%s for %s on %s was deleted by the requester before review.",
+                            booking.getBookingNumber(), resourceName, booking.getBookingDate()),
+                    "BOOKING", bookingId
+            );
+        } catch (Exception e) {
+            log.warn("Failed to notify staff about booking deletion: {}", e.getMessage());
+        }
+
+        recordHistory(bookingId, "DELETED", userId, "PENDING", null, "Booking deleted by user before review");
+        bookingRepository.delete(booking);
+        log.info("Booking {} permanently deleted by user {}", bookingId, userId);
+    }
+
     // ── READ ───────────────────────────────────────────────────────────────
 
     @Override

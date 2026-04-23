@@ -26,6 +26,7 @@ export default function TicketsPage() {
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [replySubmitting, setReplySubmitting] = useState(false)
+  const [deletingTicketId, setDeletingTicketId] = useState(null)
 
   const [form, setForm] = useState({
     resourceId: '',
@@ -177,6 +178,33 @@ export default function TicketsPage() {
     }
   }
 
+  async function handleDeleteTicket(ticket) {
+    if (!ticket?.id) return
+
+    const confirmed = window.confirm(`Delete ticket ${ticket.ticketNumber || `#${ticket.id}`}? This action cannot be undone.`)
+    if (!confirmed) return
+
+    setError('')
+    setMessage('')
+    setDeletingTicketId(ticket.id)
+
+    try {
+      await ticketService.deleteTicket(ticket.id)
+      setTickets(prev => prev.filter(item => item.id !== ticket.id))
+
+      if (selectedTicket?.id === ticket.id) {
+        setSelectedTicket(null)
+        setReplyText('')
+      }
+
+      setMessage(`Ticket ${ticket.ticketNumber || `#${ticket.id}`} deleted successfully.`)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete ticket')
+    } finally {
+      setDeletingTicketId(null)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -268,7 +296,14 @@ export default function TicketsPage() {
           />
         )}
 
-        <TicketList loading={loading} tickets={tickets} onViewDetails={handleViewDetails} />
+        <TicketList
+          loading={loading}
+          tickets={tickets}
+          currentUserId={user?.id}
+          deletingTicketId={deletingTicketId}
+          onViewDetails={handleViewDetails}
+          onDeleteTicket={handleDeleteTicket}
+        />
 
         {(selectedTicket || detailsLoading) && (
           <TicketDetailsPanel

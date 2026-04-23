@@ -28,6 +28,7 @@ export default function ManagerTicketingTab() {
   const statusOptions = isManager
     ? STATUS_OPTIONS.filter(status => status !== 'CLOSED' && status !== 'REJECTED')
     : STATUS_OPTIONS
+  const canShowUpdateButton = details?.status === 'OPEN'
 
   useEffect(() => {
     loadTickets()
@@ -89,7 +90,7 @@ export default function ManagerTicketingTab() {
     setMessage('')
     try {
       await ticketService.assignTicket(selectedId, Number(assigneeId))
-      setMessage('Technician assigned successfully (ticket moved to IN PROGRESS)')
+      setMessage('Technician assigned successfully. Waiting for technician to accept the task.')
       await selectTicket(selectedId)
       await loadTickets()
     } catch (err) {
@@ -227,23 +228,31 @@ export default function ManagerTicketingTab() {
                   <select
                     value={nextStatus}
                     onChange={e => setNextStatus(e.target.value)}
+                    disabled={!canShowUpdateButton}
                     style={{ borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', padding: '8px 10px' }}
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>
                     ))}
                   </select>
-                  <button
-                    type="submit"
-                    disabled={statusSubmitting}
-                    style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.18)', color: '#bfdbfe', fontWeight: 700 }}
-                  >
-                    <CheckCircle2 size={13} /> {statusSubmitting ? 'Updating...' : 'Update Status'}
-                  </button>
+                  {canShowUpdateButton ? (
+                    <button
+                      type="submit"
+                      disabled={statusSubmitting}
+                      style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.18)', color: '#bfdbfe', fontWeight: 700 }}
+                    >
+                      <CheckCircle2 size={13} /> {statusSubmitting ? 'Updating...' : 'Update Status'}
+                    </button>
+                  ) : (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px dashed var(--border)', color: 'var(--text-secondary)', fontSize: 11, padding: '8px 10px' }}>
+                      Update allowed only for OPEN
+                    </div>
+                  )}
                 </div>
                 <textarea
                   value={statusNote}
                   onChange={e => setStatusNote(e.target.value)}
+                  disabled={!canShowUpdateButton}
                   rows={2}
                   placeholder={nextStatus === 'REJECTED' ? 'Rejected reason (required by backend)' : 'Resolution note (optional)'}
                   style={{ width: '100%', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', padding: 8 }}
@@ -292,7 +301,7 @@ export default function ManagerTicketingTab() {
 function LinkRow() {
   return (
     <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: 12 }}>
-      <MessageSquare size={13} /> Manager can assign technicians and update progress. Technician handles close/reject.
+      <MessageSquare size={13} /> Manager assigns technician. Technician accepts task and handles progress updates.
     </div>
   )
 }

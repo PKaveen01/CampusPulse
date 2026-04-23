@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import {
   BookOpen, Plus, Clock, CheckCircle, XCircle, AlertTriangle,
   ChevronLeft, ChevronRight, Search, Filter, X, Calendar,
-  Users, MapPin, FileText, RefreshCw, Eye
+  Users, MapPin, FileText, RefreshCw, Eye, Trash2
 } from 'lucide-react'
 import Navbar from '../../components/layout/Navbar'
 import { useAuth } from '../../context/AuthContext'
@@ -36,8 +36,9 @@ function StatusBadge({ status }) {
 }
 
 // ── Booking card ─────────────────────────────────────────────────────────────
-function BookingCard({ booking, onView, onCancel, isAdmin, onApprove, onReject }) {
+function BookingCard({ booking, onView, onCancel, onDelete, isAdmin, onApprove, onReject }) {
   const canCancel = ['PENDING', 'APPROVED'].includes(booking.status)
+  const canDelete = !isAdmin && booking.status === 'PENDING'   // ← only while PENDING, disappears after admin acts
   const canApprove = isAdmin && booking.status === 'PENDING'
 
   return (
@@ -120,6 +121,11 @@ function BookingCard({ booking, onView, onCancel, isAdmin, onApprove, onReject }
             <XCircle size={13} /> Cancel
           </button>
         )}
+        {canDelete && (
+          <button onClick={() => onDelete(booking)} style={btnStyle('delete')}>
+            <Trash2 size={13} /> Delete
+          </button>
+        )}
       </div>
     </div>
   )
@@ -131,9 +137,10 @@ function btnStyle(variant) {
     padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
     cursor: 'pointer', border: '1px solid', transition: 'all 0.15s',
   }
-  if (variant === 'ghost') return { ...base, background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
-  if (variant === 'success') return { ...base, background: 'rgba(52,211,153,0.1)', borderColor: 'rgba(52,211,153,0.3)', color: '#34d399' }
-  if (variant === 'danger') return { ...base, background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.3)', color: '#f87171' }
+  if (variant === 'ghost')  return { ...base, background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
+  if (variant === 'success') return { ...base, background: 'rgba(52,211,153,0.1)',  borderColor: 'rgba(52,211,153,0.3)',  color: '#34d399' }
+  if (variant === 'danger')  return { ...base, background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.3)', color: '#f87171' }
+  if (variant === 'delete')  return { ...base, background: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.25)', color: '#f87171', fontWeight: 600 }
   return { ...base, background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff' }
 }
 
@@ -181,6 +188,57 @@ function RejectDialog({ booking, onClose, onConfirm }) {
   )
 }
 
+// ── Delete confirm dialog ─────────────────────────────────────────────────────
+function DeleteConfirmDialog({ booking, onClose, onConfirm }) {
+  if (!booking) return null
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      backdropFilter: 'blur(4px)',
+    }}>
+      <div style={{
+        background: 'var(--bg-card)',
+        border: '1px solid rgba(248,113,113,0.35)',
+        borderRadius: 'var(--radius)', padding: 28, maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+      }}>
+        {/* Icon */}
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+        }}>
+          <Trash2 size={22} color="#f87171" />
+        </div>
+
+        <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 17, fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
+          Delete Booking?
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 6 }}>
+          You are about to permanently delete booking{' '}
+          <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+            {booking.bookingNumber}
+          </strong>.
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
+          This is only possible because it hasn't been reviewed yet. Once deleted, this action <strong style={{ color: '#f87171' }}>cannot be undone</strong>.
+        </p>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={btnStyle('ghost')}>Keep It</button>
+          <button
+            onClick={onConfirm}
+            style={{ ...btnStyle('delete'), padding: '8px 16px', fontSize: 13 }}
+          >
+            <Trash2 size={13} /> Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BookingsPage() {
   const { user } = useAuth()
@@ -200,6 +258,7 @@ export default function BookingsPage() {
   const [preselectedResource, setPreselectedResource] = useState(null)
   const [viewBooking, setViewBooking] = useState(null)
   const [rejectTarget, setRejectTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   // Stats
   const [stats, setStats] = useState({ pending: 0, approved: 0, total: 0 })
@@ -281,6 +340,18 @@ export default function BookingsPage() {
       fetchBookings()
     } catch (e) {
       alert(e.response?.data?.message || 'Failed to cancel booking')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await bookingService.deleteBooking(deleteTarget.id)
+      setDeleteTarget(null)
+      fetchBookings()
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to delete booking')
+      setDeleteTarget(null)
     }
   }
 
@@ -396,6 +467,7 @@ export default function BookingsPage() {
                 isAdmin={isAdmin}
                 onView={setViewBooking}
                 onCancel={handleCancel}
+                onDelete={setDeleteTarget}
                 onApprove={handleApprove}
                 onReject={setRejectTarget}
               />
@@ -442,6 +514,13 @@ export default function BookingsPage() {
           booking={rejectTarget}
           onClose={() => setRejectTarget(null)}
           onConfirm={handleReject}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteConfirmDialog
+          booking={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
         />
       )}
     </div>
