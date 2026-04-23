@@ -2,14 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
     Building2,
     Users,
-    Wifi,
-    Wind,
-    Tv,
     X,
     MapPin,
     Loader,
     Sparkles,
-    Activity,
     Layers3,
     ChevronRight,
     ShieldCheck,
@@ -102,87 +98,65 @@ const buildingLocations = [
     }
 ];
 
+const normalizeText = (value) =>
+    (value || '')
+        .toString()
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+const includesAny = (text, keywords) => keywords.some(keyword => text.includes(keyword));
+
 // Function to determine which building a resource belongs to
 const getBuildingFromResource = (resource) => {
-    const location = resource.location?.toLowerCase() || '';
-    const building = resource.building?.toLowerCase() || '';
-    const name = resource.name?.toLowerCase() || '';
+    const location = normalizeText(resource.location);
+    const building = normalizeText(resource.building);
+    const name = normalizeText(resource.name);
 
-    // New Academic Building - 14 floors
-    if (
-        location.includes('new academic') ||
-        building.includes('new academic') ||
-        name.includes('new academic') ||
-        (location.includes('floor') && !building.includes('engineering'))
-    ) {
+    const combined = `${building} ${location} ${name}`.trim();
+
+    // 1. FIRST: rely on explicit building field / exact building-related wording
+    if (includesAny(combined, ['new academic building', 'new academic', 'nab'])) {
         return 'New Academic Building';
     }
 
-    // Main Building
-    if (
-        location.includes('main building') ||
-        building.includes('main') ||
-        name.includes('main building')
-    ) {
+    if (includesAny(combined, ['main building', 'main block', 'main'])) {
         return 'Main Building';
     }
 
-    // Engineering Building
-    if (
-        location.includes('engineering') ||
-        building.includes('engineering') ||
-        name.includes('engineering') ||
-        location.includes('fac of eng')
-    ) {
+    if (includesAny(combined, ['engineering building', 'engineering block', 'faculty of engineering', 'engineering', 'eng building', 'eng'])) {
         return 'Engineering Building';
     }
 
-    // School of Business
-    if (
-        location.includes('business') ||
-        building.includes('business') ||
-        name.includes('business') ||
-        location.includes('school of business')
-    ) {
+    if (includesAny(combined, ['school of business', 'business school', 'faculty of business', 'business'])) {
         return 'School of Business';
     }
 
-    // William Angliss Institute
-    if (
-        location.includes('william angliss') ||
-        building.includes('angliss') ||
-        name.includes('angliss') ||
-        location.includes('hospitality')
-    ) {
+    if (includesAny(combined, ['william angliss institute', 'william angliss', 'angliss', 'hospitality', 'culinary'])) {
         return 'William Angliss Institute';
     }
 
-    // Library
-    if (
-        location.includes('library') ||
-        building.includes('library') ||
-        name.includes('library')
-    ) {
+    if (includesAny(combined, ['library', 'learning resource centre', 'learning resource center'])) {
         return 'Library';
     }
 
-    // Sports Complex
-    if (
-        location.includes('sports') ||
-        building.includes('sports') ||
-        name.includes('gym') ||
-        location.includes('sport')
-    ) {
+    if (includesAny(combined, ['sports complex', 'sports', 'sport', 'gym', 'playground'])) {
         return 'Sports Complex';
     }
 
-    // Student Center
-    if (
-        location.includes('student center') ||
-        building.includes('student') ||
-        name.includes('cafeteria')
-    ) {
+    if (includesAny(combined, ['student center', 'student centre', 'student services', 'cafeteria', 'canteen', 'student hub'])) {
         return 'Student Center';
+    }
+
+    // 2. ONLY THEN use a limited fallback for generic floor-based entries
+    // This avoids wrongly forcing every "Floor 2" resource into NAB.
+    if (
+        (location.includes('floor') || building.includes('floor')) &&
+        includesAny(combined, ['academic'])
+    ) {
+        return 'New Academic Building';
     }
 
     return 'Other';
@@ -190,24 +164,32 @@ const getBuildingFromResource = (resource) => {
 
 // Function to get floor from resource
 const getFloorFromResource = (resource) => {
-    const location = resource.location?.toLowerCase() || '';
-    const floorMatch = location.match(/floor\s*(\d+)/i);
+    const floorText = `${resource.floor || ''} ${resource.location || ''}`.toLowerCase();
+
+    const floorMatch =
+        floorText.match(/floor\s*(\d+)/i) ||
+        floorText.match(/(\d+)(?:st|nd|rd|th)?\s*floor/i) ||
+        floorText.match(/\bf\s*([0-9]+)\b/i);
+
     if (floorMatch) {
-        return parseInt(floorMatch[1]);
+        return parseInt(floorMatch[1], 10);
     }
+
     return null;
 };
 
 // Function to get faculty from resource
 const getFacultyFromResource = (resource) => {
-    const location = resource.location?.toLowerCase() || '';
-    const name = resource.name?.toLowerCase() || '';
+    const location = normalizeText(resource.location);
+    const name = normalizeText(resource.name);
+    const building = normalizeText(resource.building);
+    const combined = `${location} ${name} ${building}`;
 
-    if (location.includes('computing') || name.includes('computing') || location.includes('it')) return 'Faculty of Computing';
-    if (location.includes('engineering') || name.includes('engineering')) return 'Faculty of Engineering';
-    if (location.includes('business') || name.includes('business')) return 'Faculty of Business';
-    if (location.includes('science') || name.includes('science')) return 'Faculty of Science';
-    if (location.includes('hospitality') || name.includes('culinary')) return 'Hospitality Management';
+    if (includesAny(combined, ['computing', 'it', 'faculty of computing'])) return 'Faculty of Computing';
+    if (includesAny(combined, ['engineering', 'faculty of engineering'])) return 'Faculty of Engineering';
+    if (includesAny(combined, ['business', 'faculty of business'])) return 'Faculty of Business';
+    if (includesAny(combined, ['science', 'faculty of science'])) return 'Faculty of Science';
+    if (includesAny(combined, ['hospitality', 'culinary', 'angliss'])) return 'Hospitality Management';
 
     return 'General';
 };
@@ -243,28 +225,28 @@ const CampusMap = ({ onResourceClick, onClose }) => {
                 for (let i = 1; i <= building.floors; i++) {
                     floorGrouped[building.name][i] = [];
                 }
+                floorGrouped[building.name]['various'] = [];
             });
+
             grouped['Other'] = [];
-            floorGrouped['Other'] = {};
+            floorGrouped['Other'] = { various: [] };
 
             allResources.forEach(resource => {
                 const buildingName = getBuildingFromResource(resource);
+
                 if (grouped[buildingName]) {
                     grouped[buildingName].push(resource);
 
-                    // Group by floor
                     const floor = getFloorFromResource(resource);
+
                     if (floor && floorGrouped[buildingName] && floorGrouped[buildingName][floor]) {
                         floorGrouped[buildingName][floor].push(resource);
                     } else if (floorGrouped[buildingName]) {
-                        // If floor not specified, put in "Various"
-                        if (!floorGrouped[buildingName]['various']) {
-                            floorGrouped[buildingName]['various'] = [];
-                        }
                         floorGrouped[buildingName]['various'].push(resource);
                     }
                 } else {
                     grouped['Other'].push(resource);
+                    floorGrouped['Other']['various'].push(resource);
                 }
             });
 
@@ -614,7 +596,10 @@ const CampusMap = ({ onResourceClick, onClose }) => {
                                         filter={hovered ? 'url(#glow)' : 'url(#softShadow)'}
                                         onMouseEnter={() => setHoveredBuilding(building.id)}
                                         onMouseLeave={() => setHoveredBuilding(null)}
-                                        onClick={() => setSelectedBuilding(building)}
+                                        onClick={() => {
+                                            setSelectedBuilding(building);
+                                            setSelectedFloor(null);
+                                        }}
                                         style={{
                                             transition: 'all 0.25s ease',
                                             transformOrigin: `${building.x}px ${building.y}px`,
@@ -658,7 +643,10 @@ const CampusMap = ({ onResourceClick, onClose }) => {
                                         cursor="pointer"
                                         onMouseEnter={() => setHoveredBuilding(building.id)}
                                         onMouseLeave={() => setHoveredBuilding(null)}
-                                        onClick={() => setSelectedBuilding(building)}
+                                        onClick={() => {
+                                            setSelectedBuilding(building);
+                                            setSelectedFloor(null);
+                                        }}
                                         style={{ transition: 'all 0.2s' }}
                                     >
                                         {building.name}
