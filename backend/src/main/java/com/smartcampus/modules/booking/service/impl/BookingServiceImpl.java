@@ -42,68 +42,44 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
 
-    // ────────────────────────────────────────────────────────────────────────
-    // CREATE
-    // ────────────────────────────────────────────────────────────────────────
+    // ── CREATE ─────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public BookingDTO.Response createBooking(BookingDTO.CreateRequest request, Long userId) {
 
-        // Validate resource exists and is ACTIVE
         Resource resource = resourceRepository.findById(request.getResourceId())
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
 
-        if (!"ACTIVE".equalsIgnoreCase(resource.getStatus())) {
-            throw new RuntimeException("Resource is not available for booking (status: " + resource.getStatus() + ")");
-        }
+        if (!"ACTIVE".equalsIgnoreCase(resource.getStatus()))
+            throw new RuntimeException("Resource is not available (status: " + resource.getStatus() + ")");
 
-        // Validate date is not in the past
-        if (request.getBookingDate().isBefore(LocalDate.now())) {
+        if (request.getBookingDate().isBefore(LocalDate.now()))
             throw new RuntimeException("Cannot book a date in the past");
-        }
 
-        // Validate attendees do not exceed resource capacity
-        if (request.getExpectedAttendees() != null && request.getExpectedAttendees() > resource.getCapacity()) {
-            throw new RuntimeException(
-                    "Expected attendees (" + request.getExpectedAttendees() +
-                            ") exceeds the resource capacity of " + resource.getCapacity() + "."
-            );
-        }
+        if (request.getExpectedAttendees() != null
+                && request.getExpectedAttendees() > resource.getCapacity())
+            throw new RuntimeException("Expected attendees exceed resource capacity of " + resource.getCapacity());
 
-        // Validate time range
-        if (!request.getStartTime().isBefore(request.getEndTime())) {
+        if (!request.getStartTime().isBefore(request.getEndTime()))
             throw new RuntimeException("Start time must be before end time");
-        }
 
-        // Check blocked dates
-        if (blockedDateRepository.existsByResourceIdAndDate(request.getResourceId(), request.getBookingDate()) ||
-                blockedDateRepository.existsByResourceIdIsNullAndDate(request.getBookingDate())) {
+        if (blockedDateRepository.existsByResourceIdAndDate(request.getResourceId(), request.getBookingDate())
+                || blockedDateRepository.existsByResourceIdIsNullAndDate(request.getBookingDate()))
             throw new RuntimeException("This date is blocked for bookings");
-        }
 
-        // Check availability window
-        int dow = request.getBookingDate().getDayOfWeek().getValue() - 1; // 0=Mon
-        boolean withinWindow = availabilityWindowRepository.isWithinAvailability(
-                request.getResourceId(), dow, request.getStartTime(), request.getEndTime()
-        );
-        if (!withinWindow) {
+        int dow = request.getBookingDate().getDayOfWeek().getValue() - 1;
+        if (!availabilityWindowRepository.isWithinAvailability(
+                request.getResourceId(), dow, request.getStartTime(), request.getEndTime()))
             throw new RuntimeException("Requested time is outside the resource's availability window");
-        }
 
-        // Check conflicts
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
-                request.getResourceId(),
-                request.getBookingDate(),
-                request.getStartTime(),
-                request.getEndTime(),
-                List.of("PENDING", "APPROVED")
-        );
-        if (!conflicts.isEmpty()) {
-            throw new RuntimeException("This time slot is already booked. Please choose a different time.");
-        }
+                request.getResourceId(), request.getBookingDate(),
+                request.getStartTime(), request.getEndTime(),
+                List.of("PENDING", "APPROVED"));
+        if (!conflicts.isEmpty())
+            throw new RuntimeException("This time slot is already booked.");
 
-        // Build & save booking
         Booking booking = Booking.builder()
                 .bookingNumber(generateBookingNumber())
                 .userId(userId)
@@ -116,168 +92,176 @@ public class BookingServiceImpl implements BookingService {
                 .status("PENDING")
                 .build();
 
-        final Booking savedBooking = bookingRepository.save(booking);
+        final Booking saved = bookingRepository.save(booking);
+        recordHistory(saved.getId(), "CREATED", userId, null, "PENDING", "Booking submitted");
 
-        // Audit history
-        recordHistory(savedBooking.getId(), "CREATED", userId, null, "PENDING", "Booking submitted");
-
-        // Notify admins (best-effort)
+        // ── Notify ADMIN + MANAGER: new booking needs approval ──
+        String adminMsg = String.format("Booking #%s for %s needs your approval",
+                saved.getBookingNumber(), resource.getName());
         try {
-            userRepository.findAll().stream()
-                    .filter(u -> u.getRole() == User.Role.ADMIN)
-                    .forEach(admin -> notificationService.createNotification(
-                            admin.getId(), "BOOKING_PENDING",
-                            "New Booking Request",
-                            String.format("Booking #%s for %s is pending approval", savedBooking.getBookingNumber(), resource.getName()),
-                            "BOOKING", savedBooking.getId()
-                    ));
+            notificationService.notifyByRoles(
+                    List.of(User.Role.ADMIN, User.Role.MANAGER),
+                    "BOOKING_PENDING",
+                    "New Booking Request",
+                    adminMsg,
+                    "BOOKING", saved.getId()
+            );
         } catch (Exception e) {
-            log.warn("Failed to notify admins: {}", e.getMessage());
+            log.warn("Failed to notify staff about new booking: {}", e.getMessage());
         }
 
-        return toResponse(savedBooking);
+        return toResponse(saved);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // APPROVE
-    // ────────────────────────────────────────────────────────────────────────
+    // ── APPROVE ────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public BookingDTO.Response approveBooking(Long bookingId, Long adminId, String remarks) {
         Booking booking = getOrThrow(bookingId);
-
-        if (!"PENDING".equals(booking.getStatus())) {
+        if (!"PENDING".equals(booking.getStatus()))
             throw new RuntimeException("Only PENDING bookings can be approved");
-        }
 
-        // Double-check conflicts before approving
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 booking.getResourceId(), booking.getBookingDate(),
-                booking.getStartTime(), booking.getEndTime(),
-                List.of("APPROVED")
-        );
-        // exclude self
+                booking.getStartTime(), booking.getEndTime(), List.of("APPROVED"));
         conflicts.removeIf(c -> c.getId().equals(bookingId));
-        if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Cannot approve: conflict with an already approved booking");
-        }
+        if (!conflicts.isEmpty())
+            throw new RuntimeException("Cannot approve: conflicts with an already approved booking");
 
         String oldStatus = booking.getStatus();
         booking.setStatus("APPROVED");
         booking.setApprovedBy(adminId);
         booking.setApprovedAt(LocalDateTime.now());
         bookingRepository.save(booking);
-
         recordHistory(bookingId, "APPROVED", adminId, oldStatus, "APPROVED", remarks);
 
-        notifyUser(booking.getUserId(), "BOOKING_APPROVED", "Booking Approved",
-                String.format("Your booking #%s has been approved!", booking.getBookingNumber()),
+        // ── Notify the booking owner ──
+        Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
+        String resourceName = resource != null ? resource.getName() : "the resource";
+        notifyUser(booking.getUserId(), "BOOKING_APPROVED",
+                "Booking Approved ✓",
+                String.format("Your booking #%s for %s on %s has been approved!",
+                        booking.getBookingNumber(), resourceName, booking.getBookingDate()),
                 bookingId);
 
         return toResponse(booking);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // REJECT
-    // ────────────────────────────────────────────────────────────────────────
+    // ── REJECT ─────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public BookingDTO.Response rejectBooking(Long bookingId, Long adminId, String reason) {
         Booking booking = getOrThrow(bookingId);
-
-        if (!"PENDING".equals(booking.getStatus())) {
+        if (!"PENDING".equals(booking.getStatus()))
             throw new RuntimeException("Only PENDING bookings can be rejected");
-        }
 
         String oldStatus = booking.getStatus();
         booking.setStatus("REJECTED");
         booking.setRejectionReason(reason);
         bookingRepository.save(booking);
-
         recordHistory(bookingId, "REJECTED", adminId, oldStatus, "REJECTED", reason);
 
-        notifyUser(booking.getUserId(), "BOOKING_REJECTED", "Booking Rejected",
-                String.format("Your booking #%s was rejected. Reason: %s", booking.getBookingNumber(), reason),
+        // ── Notify the booking owner ──
+        notifyUser(booking.getUserId(), "BOOKING_REJECTED",
+                "Booking Rejected",
+                String.format("Your booking #%s was rejected. Reason: %s",
+                        booking.getBookingNumber(), reason),
                 bookingId);
 
         return toResponse(booking);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // CANCEL
-    // ────────────────────────────────────────────────────────────────────────
+    // ── CANCEL ─────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public BookingDTO.Response cancelBooking(Long bookingId, Long userId) {
         Booking booking = getOrThrow(bookingId);
 
-        boolean isAdmin = userRepository.findById(userId)
+        boolean isAdminOrManager = userRepository.findById(userId)
                 .map(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.MANAGER)
                 .orElse(false);
 
-        if (!booking.getUserId().equals(userId) && !isAdmin) {
+        if (!booking.getUserId().equals(userId) && !isAdminOrManager)
             throw new RuntimeException("Not authorized to cancel this booking");
-        }
 
-        if (!"PENDING".equals(booking.getStatus()) && !"APPROVED".equals(booking.getStatus())) {
+        if (!"PENDING".equals(booking.getStatus()) && !"APPROVED".equals(booking.getStatus()))
             throw new RuntimeException("Cannot cancel a booking with status: " + booking.getStatus());
-        }
 
         String oldStatus = booking.getStatus();
         booking.setStatus("CANCELLED");
         booking.setCancelledBy(userId);
         booking.setCancelledAt(LocalDateTime.now());
         bookingRepository.save(booking);
-
         recordHistory(bookingId, "CANCELLED", userId, oldStatus, "CANCELLED", "Cancelled by user");
+
+        // ── Notify the booking owner (if cancelled by admin/manager) ──
+        boolean cancelledBySomeoneElse = !booking.getUserId().equals(userId);
+        if (cancelledBySomeoneElse) {
+            Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
+            String resourceName = resource != null ? resource.getName() : "the resource";
+            notifyUser(booking.getUserId(), "BOOKING_CANCELLED",
+                    "Booking Cancelled",
+                    String.format("Your booking #%s for %s on %s has been cancelled by an administrator.",
+                            booking.getBookingNumber(), resourceName, booking.getBookingDate()),
+                    bookingId);
+        }
+
+        // ── Notify ADMIN + MANAGER when a user self-cancels ──
+        if (!cancelledBySomeoneElse) {
+            Resource resource = resourceRepository.findById(booking.getResourceId()).orElse(null);
+            String resourceName = resource != null ? resource.getName() : "unknown resource";
+            try {
+                notificationService.notifyByRoles(
+                        List.of(User.Role.ADMIN, User.Role.MANAGER),
+                        "BOOKING_CANCELLED",
+                        "Booking Cancelled by User",
+                        String.format("Booking #%s for %s on %s was cancelled by the requester.",
+                                booking.getBookingNumber(), resourceName, booking.getBookingDate()),
+                        "BOOKING", bookingId
+                );
+            } catch (Exception e) {
+                log.warn("Failed to notify staff about cancellation: {}", e.getMessage());
+            }
+        }
+
         return toResponse(booking);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // READ
-    // ────────────────────────────────────────────────────────────────────────
+    // ── READ ───────────────────────────────────────────────────────────────
 
     @Override
     public BookingDTO.Response getBookingById(Long bookingId, Long userId) {
         Booking booking = getOrThrow(bookingId);
-        boolean isAdmin = userRepository.findById(userId)
+        boolean isAdminOrManager = userRepository.findById(userId)
                 .map(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.MANAGER)
                 .orElse(false);
-        if (!booking.getUserId().equals(userId) && !isAdmin) {
+        if (!booking.getUserId().equals(userId) && !isAdminOrManager)
             throw new RuntimeException("Not authorized to view this booking");
-        }
         return toResponse(booking);
     }
 
     @Override
     public Page<BookingDTO.Response> getMyBookings(Long userId, Pageable pageable) {
-        return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(this::toResponse);
+        return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(this::toResponse);
     }
 
     @Override
     public Page<BookingDTO.Response> getAllBookings(String status, Pageable pageable) {
-        if (status != null && !status.isBlank()) {
-            return bookingRepository.findByStatusOrderByCreatedAtDesc(status, pageable)
-                    .map(this::toResponse);
-        }
-        return bookingRepository.findAllByOrderByCreatedAtDesc(pageable)
-                .map(this::toResponse);
+        if (status != null && !status.isBlank())
+            return bookingRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(this::toResponse);
+        return bookingRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::toResponse);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // AVAILABILITY
-    // ────────────────────────────────────────────────────────────────────────
+    // ── AVAILABILITY ───────────────────────────────────────────────────────
 
     @Override
     public List<BookingDTO.TimeSlot> getAvailableTimeSlots(Long resourceId, LocalDate date) {
-        int dow = date.getDayOfWeek().getValue() - 1; // 0=Mon
+        int dow = date.getDayOfWeek().getValue() - 1;
         List<AvailabilityWindow> windows =
                 availabilityWindowRepository.findAvailabilityWindowsForDay(resourceId, dow);
-
         List<Booking> existingBookings =
                 bookingRepository.findActiveBookingsForResourceOnDate(resourceId, date);
 
@@ -288,8 +272,7 @@ public class BookingServiceImpl implements BookingService {
                 final LocalTime slotStart = current;
                 final LocalTime slotEnd = current.plusMinutes(30);
                 boolean booked = existingBookings.stream().anyMatch(b ->
-                        b.getStartTime().isBefore(slotEnd) && b.getEndTime().isAfter(slotStart)
-                );
+                        b.getStartTime().isBefore(slotEnd) && b.getEndTime().isAfter(slotStart));
                 slots.add(new BookingDTO.TimeSlot(slotStart, slotEnd, !booked));
                 current = slotEnd;
             }
@@ -299,15 +282,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public boolean checkConflict(Long resourceId, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        List<Booking> conflicts = bookingRepository.findConflictingBookings(
-                resourceId, date, startTime, endTime, List.of("PENDING", "APPROVED")
-        );
-        return !conflicts.isEmpty();
+        return !bookingRepository.findConflictingBookings(
+                resourceId, date, startTime, endTime, List.of("PENDING", "APPROVED")).isEmpty();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // HELPERS
-    // ────────────────────────────────────────────────────────────────────────
+    // ── HELPERS ────────────────────────────────────────────────────────────
 
     private Booking getOrThrow(Long id) {
         return bookingRepository.findById(id)
@@ -317,12 +296,8 @@ public class BookingServiceImpl implements BookingService {
     private void recordHistory(Long bookingId, String action, Long performedBy,
                                String oldStatus, String newStatus, String remarks) {
         historyRepository.save(BookingHistory.builder()
-                .bookingId(bookingId)
-                .action(action)
-                .performedBy(performedBy)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .remarks(remarks)
+                .bookingId(bookingId).action(action).performedBy(performedBy)
+                .oldStatus(oldStatus).newStatus(newStatus).remarks(remarks)
                 .build());
     }
 
@@ -330,7 +305,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             notificationService.createNotification(userId, type, title, message, "BOOKING", entityId);
         } catch (Exception e) {
-            log.warn("Failed to send notification: {}", e.getMessage());
+            log.warn("Failed to send booking notification: {}", e.getMessage());
         }
     }
 
@@ -358,22 +333,49 @@ public class BookingServiceImpl implements BookingService {
         r.setCreatedAt(b.getCreatedAt());
         r.setUpdatedAt(b.getUpdatedAt());
 
-        // Enrich with user name
         userRepository.findById(b.getUserId()).ifPresent(u -> {
             r.setUserName(u.getName());
             r.setUserEmail(u.getEmail());
         });
-        // Enrich with resource name
         resourceRepository.findById(b.getResourceId()).ifPresent(res -> {
             r.setResourceName(res.getName());
             r.setResourceLocation(res.getLocation());
         });
-        // Enrich approver name
-        if (b.getApprovedBy() != null) {
-            userRepository.findById(b.getApprovedBy())
-                    .ifPresent(u -> r.setApprovedByName(u.getName()));
-        }
+        if (b.getApprovedBy() != null)
+            userRepository.findById(b.getApprovedBy()).ifPresent(u -> r.setApprovedByName(u.getName()));
 
         return r;
+    }
+
+    // ── DELETE (hard delete, admin only) ───────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId, Long adminId) {
+        Booking booking = getOrThrow(bookingId);
+
+        // Only allow deleting cancelled/rejected bookings to prevent data loss
+        if (!"CANCELLED".equals(booking.getStatus()) && !"REJECTED".equals(booking.getStatus())) {
+            throw new RuntimeException(
+                    "Only CANCELLED or REJECTED bookings can be deleted. " +
+                            "Cancel the booking first before deleting.");
+        }
+
+        // Notify the booking owner before deleting
+        try {
+            notificationService.createNotification(
+                    booking.getUserId(),
+                    "BOOKING_DELETED",
+                    "Booking Record Removed",
+                    String.format("Your booking #%s has been permanently removed by an administrator.",
+                            booking.getBookingNumber()),
+                    "BOOKING", bookingId
+            );
+        } catch (Exception e) {
+            log.warn("Failed to notify user about booking deletion: {}", e.getMessage());
+        }
+
+        historyRepository.deleteByBookingId(bookingId);
+        bookingRepository.delete(booking);
     }
 }
