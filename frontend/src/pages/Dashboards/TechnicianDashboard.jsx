@@ -1,15 +1,11 @@
-import React from 'react'
-import { Wrench, Clock, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Wrench, Clock, CheckCircle, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Navbar from '../../components/layout/Navbar'
 import StatCard from '../../components/common/StatCard'
+import { ticketService } from '../../services/ticketService'
 
-const MOCK_ASSIGNED = [
-  { number: 'TKT-001', desc: 'Projector purple tint – Room 101', priority: 'HIGH', status: 'IN_PROGRESS', created: '2h ago', location: 'Block A, Room 101' },
-  { number: 'TKT-002', desc: 'AC unit failure – Lab B', priority: 'CRITICAL', status: 'OPEN', created: '30m ago', location: 'Block B, Lab B' },
-  { number: 'TKT-004', desc: 'Network switch down – Server room', priority: 'HIGH', status: 'OPEN', created: '4h ago', location: 'Block C, Server Room' },
-]
 const PRIORITY_COLOR = { CRITICAL: 'var(--danger)', HIGH: 'var(--warning)', MEDIUM: 'var(--info)', LOW: 'var(--success)' }
 const STATUS_STYLE = {
   OPEN:       { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' },
@@ -19,6 +15,53 @@ const STATUS_STYLE = {
 
 export default function TechnicianDashboard() {
   const { user } = useAuth()
+  const [tickets, setTickets] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [acceptingId, setAcceptingId] = useState(null)
+
+  useEffect(() => {
+    loadAssignedTickets()
+  }, [])
+
+  const openCount = useMemo(() => tickets.filter(t => t.status === 'OPEN').length, [tickets])
+  const inProgressCount = useMemo(() => tickets.filter(t => t.status === 'IN_PROGRESS').length, [tickets])
+  const resolvedCount = useMemo(() => tickets.filter(t => t.status === 'RESOLVED' || t.status === 'CLOSED').length, [tickets])
+  const criticalCount = useMemo(() => tickets.filter(t => t.priority === 'CRITICAL').length, [tickets])
+
+  async function loadAssignedTickets() {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await ticketService.getMyTickets()
+      setTickets(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load assigned tickets')
+      setTickets([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleAccept(ticket) {
+    if (!ticket?.id || ticket.status !== 'OPEN') return
+
+    setAcceptingId(ticket.id)
+    setError('')
+    setMessage('')
+
+    try {
+      await ticketService.acceptAssignedTicket(ticket.id)
+      setMessage(`Ticket ${ticket.ticketNumber} accepted successfully.`)
+      await loadAssignedTickets()
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to accept ticket')
+    } finally {
+      setAcceptingId(null)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -38,11 +81,24 @@ export default function TechnicianDashboard() {
           </p>
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            {error && <p style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</p>}
+            {message && <p style={{ fontSize: 12, color: 'var(--success)' }}>{message}</p>}
+          </div>
+          <button
+            onClick={loadAssignedTickets}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}
+          >
+            <RefreshCw size={13} /> Refresh
+          </button>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
-          <StatCard icon={Wrench}       label="Assigned to Me"  value="3"  sub="2 open, 1 in progress" color="var(--warning)" delay={0.05} />
-          <StatCard icon={AlertTriangle} label="Critical"        value="1"  sub="Needs immediate attention" color="var(--danger)" delay={0.1} />
-          <StatCard icon={CheckCircle}  label="Resolved Today"  value="4"  sub="Great work!"             color="var(--success)" delay={0.15} />
-          <StatCard icon={TrendingUp}   label="This Week"       value="11" sub="Tickets closed"           color="var(--accent)"  delay={0.2} />
+          <StatCard icon={Wrench}       label="Assigned to Me"  value={String(tickets.length)}  sub={`${openCount} open, ${inProgressCount} in progress`} color="var(--warning)" delay={0.05} />
+          <StatCard icon={AlertTriangle} label="Critical"        value={String(criticalCount)}  sub="Needs immediate attention" color="var(--danger)" delay={0.1} />
+          <StatCard icon={CheckCircle}  label="Resolved/Closed" value={String(resolvedCount)}  sub="Completed assigned tasks" color="var(--success)" delay={0.15} />
+          <StatCard icon={TrendingUp}   label="Active Work"     value={String(inProgressCount)} sub="Tickets currently in progress" color="var(--accent)"  delay={0.2} />
         </div>
 
         {/* Assigned tickets */}
@@ -53,10 +109,14 @@ export default function TechnicianDashboard() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {MOCK_ASSIGNED.map(t => {
+            {loading ? (
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Loading assigned tickets...</p>
+            ) : tickets.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No assigned tickets yet.</p>
+            ) : tickets.map(t => {
               const s = STATUS_STYLE[t.status] ?? STATUS_STYLE.OPEN
               return (
-                <div key={t.number} style={{
+                <div key={t.id} style={{
                   padding: '16px 18px', borderRadius: 10,
                   background: 'rgba(255,255,255,0.025)',
                   border: `1px solid ${t.priority === 'CRITICAL' ? 'rgba(248,113,113,0.3)' : 'var(--border)'}`,
@@ -64,24 +124,40 @@ export default function TechnicianDashboard() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.number}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.ticketNumber}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: PRIORITY_COLOR[t.priority] }}>● {t.priority}</span>
                     </div>
-                    <p style={{ fontSize: 14, fontWeight: 600 }}>{t.desc}</p>
+                    <p style={{ fontSize: 14, fontWeight: 600 }}>{t.description}</p>
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Clock size={11} /> {t.created} · 📍 {t.location}
+                      <Clock size={11} /> {t.createdAt ? new Date(t.createdAt).toLocaleString() : '-'} · 📍 {t.location || 'N/A'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: s.bg, color: s.color }}>
                       {t.status.replace('_', ' ')}
                     </span>
-                    <button style={{
-                      padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                      background: 'var(--accent)', color: '#fff', border: 'none',
-                    }}>
-                      {t.status === 'OPEN' ? 'Start →' : 'Update →'}
-                    </button>
+                    {t.status === 'OPEN' ? (
+                      <button
+                        onClick={() => handleAccept(t)}
+                        disabled={acceptingId === t.id}
+                        style={{
+                          padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                          background: 'var(--accent)', color: '#fff', border: 'none',
+                        }}
+                      >
+                        {acceptingId === t.id ? 'Accepting...' : 'Accept Task'}
+                      </button>
+                    ) : (
+                      <Link
+                        to="/tickets/solve"
+                        style={{
+                          padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                          background: 'rgba(59,130,246,0.18)', color: '#bfdbfe',
+                        }}
+                      >
+                        Open Task →
+                      </Link>
+                    )}
                   </div>
                 </div>
               )

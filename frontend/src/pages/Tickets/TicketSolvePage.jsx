@@ -23,6 +23,7 @@ export default function TicketSolvePage() {
   const [assigning, setAssigning] = useState(false)
   const [statusSubmitting, setStatusSubmitting] = useState(false)
   const [replySubmitting, setReplySubmitting] = useState(false)
+  const canShowUpdateButton = details?.status === 'OPEN'
 
   useEffect(() => {
     loadData()
@@ -214,19 +215,27 @@ export default function TicketSolvePage() {
                     <select
                       value={nextStatus}
                       onChange={e => setNextStatus(e.target.value)}
+                      disabled={!canShowUpdateButton}
                       style={{ borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', padding: '8px 10px' }}
                     >
                       {STATUS_OPTIONS.map(status => (
                         <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>
                       ))}
                     </select>
-                    <button type="submit" disabled={statusSubmitting} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.18)', color: '#bfdbfe', fontWeight: 700 }}>
-                      <CheckCircle2 size={13} /> {statusSubmitting ? 'Updating...' : 'Update'}
-                    </button>
+                    {canShowUpdateButton ? (
+                      <button type="submit" disabled={statusSubmitting} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(59,130,246,0.18)', color: '#bfdbfe', fontWeight: 700 }}>
+                        <CheckCircle2 size={13} /> {statusSubmitting ? 'Updating...' : 'Update'}
+                      </button>
+                    ) : (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px dashed var(--border)', color: 'var(--text-secondary)', fontSize: 11, padding: '8px 10px' }}>
+                        Update allowed only for OPEN
+                      </div>
+                    )}
                   </div>
                   <textarea
                     value={statusNote}
                     onChange={e => setStatusNote(e.target.value)}
+                    disabled={!canShowUpdateButton}
                     rows={2}
                     placeholder={nextStatus === 'REJECTED' ? 'Rejected reason (required by backend)' : 'Resolution note (optional)'}
                     style={{ width: '100%', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', padding: 8 }}
