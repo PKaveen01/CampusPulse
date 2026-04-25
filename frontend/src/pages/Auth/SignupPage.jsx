@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { authService } from '../../services/authService'
+import logoImage from '../../components/images/logo.png'
 
 function getDashboardPath(role) {
   switch (role) {
@@ -112,13 +113,12 @@ export default function SignupPage() {
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 14, margin: '0 auto 14px',
-            background: 'linear-gradient(135deg, var(--accent-2), var(--accent))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 24, fontWeight: 800, color: '#fff',
-            boxShadow: '0 8px 24px rgba(124,99,247,0.4)',
-          }}>S</div>
+          <img
+            src={logoImage}
+            alt="CampusPulse"
+            style={{ width: 64, height: 64, borderRadius: 16, objectFit: 'cover', margin: '0 auto 14px', display: 'block', boxShadow: '0 8px 24px rgba(79,142,247,0.3)' }}
+            onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/64x64?text=CP' }}
+          />
           <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 700, marginBottom: 6 }}>
             Create your account
           </h1>

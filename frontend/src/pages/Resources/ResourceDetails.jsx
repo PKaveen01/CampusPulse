@@ -30,9 +30,6 @@ const ResourceDetails = () => {
         }
     };
 
-    const handleBookNow = () => {
-        navigate(`/bookings/new?resourceId=${resource.id}`);
-    };
 
     const getStatusStyles = (status) => {
         if (status === 'ACTIVE') {
@@ -251,7 +248,7 @@ const ResourceDetails = () => {
                     </button>
 
                     <button
-                        onClick={handleBookNow}
+                        onClick={() => navigate('/bookings', { state: { resourceId: resource.id } })}
                         disabled={resource.status !== 'ACTIVE'}
                         style={{
                             padding: '10px 18px',
@@ -726,38 +723,16 @@ const ResourceDetails = () => {
 
                                 {/* Action Buttons */}
                                 <div style={{ marginTop: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                                    {resource.status === 'ACTIVE' && (
-                                        <button
-                                            onClick={() => navigate('/bookings', { state: { resourceId: resource.id } })}
-                                            style={{
-                                                flex: 1,
-                                                padding: '12px',
-                                                background: 'var(--accent)',
-                                                border: '1px solid var(--accent)',
-                                                borderRadius: 'var(--radius-sm)',
-                                                color: '#fff',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: 8,
-                                                fontWeight: 600,
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            📅 Book This Resource
-                                        </button>
-                                    )}
                                     <button
-                                        onClick={handleBookNow}
+                                        onClick={() => navigate('/bookings', { state: { resourceId: resource.id } })}
                                         disabled={resource.status !== 'ACTIVE'}
                                         style={{
                                             flex: 1,
                                             padding: '12px',
-                                            background: resource.status === 'ACTIVE' ? '#334155' : '#2a2a3a',
-                                            border: resource.status === 'ACTIVE' ? '1px solid #475569' : '1px solid #3a3a4a',
+                                            background: resource.status === 'ACTIVE' ? 'var(--accent)' : '#2a2a3a',
+                                            border: resource.status === 'ACTIVE' ? '1px solid var(--accent)' : '1px solid #3a3a4a',
                                             borderRadius: 'var(--radius-sm)',
-                                            color: resource.status === 'ACTIVE' ? 'white' : '#a0a0b0',
+                                            color: resource.status === 'ACTIVE' ? '#fff' : '#a0a0b0',
                                             cursor: resource.status === 'ACTIVE' ? 'pointer' : 'not-allowed',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -768,12 +743,12 @@ const ResourceDetails = () => {
                                         }}
                                         onMouseEnter={e => {
                                             if (resource.status === 'ACTIVE') {
-                                                e.currentTarget.style.background = '#3f4d63';
+                                                e.currentTarget.style.opacity = '0.88';
                                             }
                                         }}
                                         onMouseLeave={e => {
                                             if (resource.status === 'ACTIVE') {
-                                                e.currentTarget.style.background = '#334155';
+                                                e.currentTarget.style.opacity = '1';
                                             }
                                         }}
                                     >
