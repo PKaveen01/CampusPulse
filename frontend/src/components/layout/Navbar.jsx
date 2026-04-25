@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../common/NotificationBell'
 import ProfileAvatar from '../common/ProfileAvatar'
+import logoImage from '../images/logo.png'
 
 const ROLE_COLOR = {
   USER: 'var(--role-user)',
@@ -74,12 +75,12 @@ export default function Navbar() {
       }}>
         {/* Logo */}
         <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 700, color: '#fff',
-          }}>C</div>
+          <img
+            src={logoImage}
+            alt="CampusPulse"
+            style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }}
+            onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/36x36?text=CP' }}
+          />
           <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
             CampusPulse
           </span>
